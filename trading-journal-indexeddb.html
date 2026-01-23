@@ -1,0 +1,3561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trading Journal">
+    <title>Journal de Trading Pro</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .backup-status {
+            background: #10b981;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .backup-status.show {
+            display: block;
+        }
+
+        .backup-status.warning {
+            background: #f59e0b;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: #f7f7f7;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-value.positive {
+            color: #10b981;
+        }
+
+        .stat-value.negative {
+            color: #ef4444;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .result-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-result {
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .btn-result.win {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .btn-result.win.active {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .btn-result.loss {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn-result.loss.active {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-export {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-info {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .trades-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .trade-item {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .trade-item.win {
+            border-left-color: #10b981;
+        }
+
+        .trade-item.loss {
+            border-left-color: #ef4444;
+        }
+
+        .trade-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .trade-date {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .trade-strategy {
+            font-weight: 600;
+            color: #374151;
+            font-size: 13px;
+        }
+
+        .trade-result {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .trade-details {
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .trade-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .btn-edit, .btn-delete-trade, .btn-resolve {
+            flex: 1;
+            padding: 6px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-edit:active {
+            background: #2563eb;
+        }
+
+        .btn-delete-trade {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-delete-trade:active {
+            background: #dc2626;
+        }
+
+        .btn-resolve {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-resolve:active {
+            background: #059669;
+        }
+
+        .capital-input {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tab-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            padding: 12px 8px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .filters-section {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            margin-bottom: 10px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .checkbox-label input {
+            width: auto;
+            margin-right: 6px;
+        }
+
+        .checkbox-label:has(input:checked) {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .filter-reset {
+            background: #ef4444;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #6b7280;
+            padding: 40px;
+            font-size: 14px;
+        }
+
+        .config-form {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .config-list {
+            margin-top: 15px;
+        }
+
+        .config-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #e5e7eb;
+        }
+
+        .config-info {
+            font-size: 14px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .time-input-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .time-input-group input {
+            width: 60px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .time-input-group span {
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #1e40af;
+            margin-bottom: 15px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="backup-status" id="backupStatus"></div>
+
+        <div class="header">
+            <h1>📊 Journal de Trading Pro</h1>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Trades</div>
+                    <div class="stat-value" id="totalTrades">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value" id="winRate">0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">P&L Total</div>
+                    <div class="stat-value" id="totalPnL">0€</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Performance</div>
+                    <div class="stat-value" id="performance">0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Drawdown Max</div>
+                    <div class="stat-value negative" id="maxDrawdown">0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Profit Factor</div>
+                    <div class="stat-value" id="profitFactor">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Frais Totaux</div>
+                    <div class="stat-value negative" id="totalFees">0€</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">R:R Moyen</div>
+                    <div class="stat-value" id="avgRR">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('entry')">➕ Nouveau</button>
+            <button class="tab-btn" onclick="switchTab('history')">📋 Historique</button>
+            <button class="tab-btn" onclick="switchTab('analysis')">📈 Analyse</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙️ Config</button>
+        </div>
+
+        <!-- ENTRY TAB -->
+        <div id="entryTab" class="tab-content active">
+            <div class="card">
+                <h2 style="margin-bottom: 15px; color: #374151;" id="formTitle">Enregistrer un Trade</h2>
+                <div id="editMode" style="display: none; background: #dbeafe; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; color: #1e40af;">
+                    ✏️ Mode édition - Modification du trade <strong id="editingTradeId"></strong>
+                    <button onclick="cancelEdit()" style="float: right; background: #6b7280; color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Annuler</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Date et Heure</label>
+                    <input type="datetime-local" id="tradeDate">
+                </div>
+
+                <div class="form-group">
+                    <label>Impact des News</label>
+                    <div style="display: flex; gap: 25px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; cursor: pointer; white-space: nowrap;">
+                            <input type="radio" name="newsImpact" value="before" style="margin-right: 8px;">
+                            Avant news
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; white-space: nowrap;">
+                            <input type="radio" name="newsImpact" value="after" style="margin-right: 8px;">
+                            Après news
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; white-space: nowrap;">
+                            <input type="radio" name="newsImpact" value="none" checked style="margin-right: 8px;">
+                            Pas de news
+                        </label>
+                    </div>
+                </div>
+
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>Actif</label>
+                        <select id="asset"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stratégie</label>
+                        <select id="strategy"></select>
+                    </div>
+                </div>
+
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>Broker</label>
+                        <select id="broker"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Frais (% du risque)</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" id="feesPercent" placeholder="0.5" step="0.01" min="0" style="flex: 1;" oninput="updateFeesAmount()">
+                            <div id="feesAmount" style="min-width: 80px; padding: 10px; background: #fff7ed; border-radius: 8px; font-size: 13px; font-weight: 600; color: #9a3412; text-align: center;">0€</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>Direction</label>
+                        <select id="direction">
+                            <option value="long">📈 Long (Achat)</option>
+                            <option value="short">📉 Short (Vente)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Risque (€)</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" id="riskAmount" placeholder="50" step="0.01" style="flex: 1;" oninput="updateRiskPercent()">
+                            <div id="riskPercent" style="min-width: 80px; padding: 10px; background: #f3f4f6; border-radius: 8px; font-size: 13px; font-weight: 600; color: #374151; text-align: center;">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Résultat</label>
+                    <div class="result-buttons">
+                        <button class="btn-result win" onclick="setResult('win')">✓ Gagnant</button>
+                        <button class="btn-result loss" onclick="setResult('loss')">✗ Perdant</button>
+                    </div>
+                </div>
+
+                <div class="form-group" id="amountGroup">
+                    <label id="amountLabel">Montant (€)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="amount" placeholder="Ex: 50+80+120-30" style="flex: 1;" oninput="updateRiskReward(); updateAmountCalculation();">
+                        <div id="riskReward" style="min-width: 100px; padding: 12px; background: #f3f4f6; border-radius: 8px; font-size: 14px; font-weight: 600; color: #374151; text-align: center;">R:R 0</div>
+                    </div>
+                    <div id="amountCalculationResult" style="margin-top: 5px; font-size: 14px; font-weight: 600; display: none;"></div>
+                    <div id="netAmount" style="margin-top: 8px; padding: 10px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px; font-size: 13px; color: #065f46; display: none;">
+                        <strong>Montant net (après frais) :</strong> <span id="netAmountValue">0€</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes (optionnel)</label>
+                    <input type="text" id="notes" placeholder="Contexte, émotions, setup...">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" id="saveButton" onclick="saveTrade('completed')" style="flex: 1;">💾 Enregistrer</button>
+                    <button class="btn" id="pendingButton" onclick="saveTrade('pending')" style="flex: 1; background: #f59e0b; color: white; border: none;">⏳ En attente</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="historyTab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 15px; color: #374151;">Mes Trades</h2>
+                
+                <button onclick="toggleFilters('history')" class="filter-toggle" style="width: 100%; padding: 10px; margin-bottom: 10px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; display: flex; align-items: center; justify-content: space-between;">
+                    <span>🔽 Filtres</span>
+                    <span id="filterToggleIcon">▼</span>
+                </button>
+                
+                <div class="filters-section" id="filtersHistory" style="display: none;">
+                    <div class="filter-group">
+                        <label>Actifs</label>
+                        <div class="checkbox-group" id="assetFilters"></div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Brokers</label>
+                        <div class="checkbox-group" id="brokerFilters"></div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Stratégies</label>
+                        <div class="checkbox-group" id="strategyFilters"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Direction</label>
+                        <div class="checkbox-group" id="directionFilters"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Statut</label>
+                        <div class="checkbox-group" id="statusFilters"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>News</label>
+                        <div class="checkbox-group" id="newsFilters"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Jours de la semaine</label>
+                        <div class="checkbox-group" id="dayFilters"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Plages horaires</label>
+                        <div class="checkbox-group" id="timeFilters"></div>
+                    </div>
+
+                    <button class="filter-reset" onclick="resetFilters()">🔄 Réinitialiser les filtres</button>
+                </div>
+
+                <div class="trades-list" id="tradesList"></div>
+                <button class="btn btn-export" onclick="exportCSV()">📥 Exporter CSV</button>
+                <button class="btn btn-secondary" onclick="exportJSON()">📥 Exporter JSON</button>
+                <button class="btn btn-info" onclick="importJSON()">📤 Importer JSON</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+                <button class="btn btn-danger" onclick="clearData()">🗑️ Effacer tout</button>
+            </div>
+        </div>
+
+        <!-- ANALYSIS TAB -->
+        <div id="analysisTab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 15px; color: #374151;">Analyse de Performance</h2>
+                
+                <button onclick="toggleFilters('analysis')" class="filter-toggle" style="width: 100%; padding: 10px; margin-bottom: 10px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-weight: 600; color: #374151; display: flex; align-items: center; justify-content: space-between;">
+                    <span>🔽 Filtres</span>
+                    <span id="filterToggleIconAnalysis">▼</span>
+                </button>
+                
+                <div class="filters-section" id="filtersAnalysis" style="display: none;">
+                    <div class="filter-group">
+                        <label>Filtrer par Actif</label>
+                        <div class="checkbox-group" id="assetFiltersAnalysis"></div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Filtrer par Broker</label>
+                        <div class="checkbox-group" id="brokerFiltersAnalysis"></div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Filtrer par Stratégie</label>
+                        <div class="checkbox-group" id="strategyFiltersAnalysis"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Filtrer par Direction</label>
+                        <div class="checkbox-group" id="directionFiltersAnalysis"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Filtrer par News</label>
+                        <div class="checkbox-group" id="newsFiltersAnalysis"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Filtrer par Jour</label>
+                        <div class="checkbox-group" id="dayFiltersAnalysis"></div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Filtrer par Horaire</label>
+                        <div class="checkbox-group" id="timeFiltersAnalysis"></div>
+                    </div>
+
+                    <button class="filter-reset" onclick="resetAnalysisFilters()">🔄 Réinitialiser</button>
+                </div>
+
+                <div id="chartsContainer"></div>
+            </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="settingsTab" class="tab-content">
+            <!-- BACKUP INFO -->
+            <div class="card">
+                <h2 class="section-title">💾 Sauvegarde Automatique</h2>
+                
+                <div class="info-box" style="word-wrap: break-word; overflow-wrap: break-word;">
+                    <strong style="display: block; margin-bottom: 4px;">✅ Vos données sont sécurisées avec IndexedDB</strong>
+                    <p style="margin: 0; line-height: 1.5;">
+                        Chrome ne peut PAS supprimer vos données automatiquement. Un backup automatique est créé toutes les 30 minutes.
+                    </p>
+                </div>
+
+                <div class="info-box" style="background: #fef3c7; border-left-color: #f59e0b; color: #92400e; margin-top: 10px; word-wrap: break-word; overflow-wrap: break-word;">
+                    <strong style="display: block; margin-bottom: 4px;">📊 Espace utilisé</strong>
+                    <div id="storageInfo" style="line-height: 1.5;">Nombre de trades : <span id="tradesCount">0</span><br>
+                    Taille estimée : <span id="storageSize">Calcul...</span></div>
+                </div>
+
+                <button class="btn btn-export" onclick="createManualBackup()">📥 Créer un Backup Manuel</button>
+                <button class="btn btn-info" onclick="showBackupInfo()">ℹ️ Info Sauvegarde</button>
+                <button class="btn btn-warning" onclick="archiveOldTrades()">📦 Archiver Vieux Trades</button>
+            </div>
+
+            <!-- CAPITAL SECTION -->
+            <div class="card">
+                <h2 class="section-title">💰 Capital Initial</h2>
+                
+                <div class="capital-input">
+                    <label>Capital Initial (€)</label>
+                    <input type="number" id="initialCapital" placeholder="10000" step="0.01">
+                </div>
+                
+                <p style="font-size: 13px; color: #6b7280; margin-top: 10px;">
+                    Ce montant sert de base pour calculer vos performances et votre drawdown.
+                </p>
+            </div>
+
+            <!-- RISQUE PAR DÉFAUT SECTION -->
+            <div class="card">
+                <h2 class="section-title">🎯 Risque par Défaut</h2>
+                
+                <div class="capital-input">
+                    <label>Risque par défaut (€)</label>
+                    <input type="number" id="defaultRisk" placeholder="50" step="0.01" min="0">
+                </div>
+                
+                <p style="font-size: 13px; color: #6b7280; margin-top: 10px;">
+                    <strong>Gagnez du temps :</strong> Ce montant sera pré-rempli automatiquement dans le formulaire. Modifiez-le uniquement si votre risque est différent pour un trade spécifique.
+                    <br>
+                    💡 <strong>Astuce :</strong> Si vous risquez toujours 1% de votre capital, mettez votre capital × 0.01 (ex: 10 000€ → 100€).
+                </p>
+            </div>
+
+            <!-- FRAIS SECTION -->
+            <div class="card">
+                <h2 class="section-title">💸 Frais de Trading</h2>
+                
+                <div class="info-box" style="background: #fef3c7; border-left-color: #f59e0b; color: #92400e; word-wrap: break-word; overflow-wrap: break-word;">
+                    <strong style="display: block; margin-bottom: 8px;">ℹ️ Note sur la précision des frais</strong>
+                    <p style="margin: 8px 0; line-height: 1.5;">
+                        Les frais réels sont calculés sur la taille de position (volume tradé). Pour simplifier la saisie des trades et éviter de devoir entrer le prix d'entrée et la taille de position à chaque fois, nous approximons les frais en appliquant un pourcentage sur le risque pris.
+                    </p>
+                    <p style="margin: 8px 0; line-height: 1.5;">
+                        <strong>Cette méthode n'est pas parfaitement précise</strong>, mais elle permet d'avoir une <strong>estimation raisonnable</strong> de l'impact des frais sans alourdir la saisie. Vous pouvez calibrer le pourcentage en comparant avec vos frais réels sur quelques trades.
+                    </p>
+                </div>
+                
+                <div class="capital-input" style="margin-top: 15px;">
+                    <label>Frais par défaut (% du risque)</label>
+                    <input type="number" id="defaultFees" placeholder="0.5" step="0.01" min="0">
+                </div>
+                
+                <p style="font-size: 13px; color: #6b7280; margin-top: 10px;">
+                    <strong>Exemple :</strong> Si vous indiquez 1%, pour un risque de 50€, les frais seront de 0.50€.<br>
+                    💡 <strong>Astuce :</strong> Regardez vos frais réels sur 5-10 trades et ajustez ce pourcentage pour qu'il colle à votre moyenne.
+                </p>
+            </div>
+
+            <!-- ASSETS SECTION -->
+            <div class="card">
+                <h2 class="section-title">💱 Gestion des Actifs</h2>
+                
+                <div class="config-form">
+                    <label style="margin-bottom: 10px; display: block;">Ajouter un nouvel actif</label>
+                    <div class="form-group">
+                        <input type="text" id="assetName" placeholder="Nom de l'actif (ex: NAS100, EUR/USD)">
+                    </div>
+                    <button class="btn btn-primary" onclick="addAsset()">➕ Ajouter Actif</button>
+                </div>
+
+                <div class="config-list">
+                    <h3 style="font-size: 14px; color: #374151; margin-bottom: 10px;">Actifs configurés</h3>
+                    <div id="assetsList"></div>
+                </div>
+
+                <button class="btn btn-warning" onclick="resetDefaultAssets()">🔄 Restaurer actifs par défaut</button>
+            </div>
+
+            <!-- BROKERS SECTION -->
+            <div class="card">
+                <h2 class="section-title">🏦 Gestion des Brokers</h2>
+                
+                <div class="config-form">
+                    <label style="margin-bottom: 10px; display: block;">Ajouter un nouveau broker</label>
+                    <div class="form-group">
+                        <input type="text" id="brokerName" placeholder="Nom du broker (ex: FTMO, Interactive Brokers)">
+                    </div>
+                    <button class="btn btn-primary" onclick="addBroker()">➕ Ajouter Broker</button>
+                </div>
+
+                <div class="config-list">
+                    <h3 style="font-size: 14px; color: #374151; margin-bottom: 10px;">Brokers configurés</h3>
+                    <div id="brokersList"></div>
+                </div>
+
+                <button class="btn btn-warning" onclick="resetDefaultBrokers()">🔄 Restaurer brokers par défaut</button>
+            </div>
+
+            <!-- STRATEGIES SECTION -->
+            <div class="card">
+                <h2 class="section-title">🎯 Gestion des Stratégies</h2>
+                
+                <div class="config-form">
+                    <label style="margin-bottom: 10px; display: block;">Ajouter une nouvelle stratégie</label>
+                    <div class="form-group">
+                        <input type="text" id="strategyName" placeholder="Nom de la stratégie (ex: ICT Silver Bullet)">
+                    </div>
+                    <button class="btn btn-primary" onclick="addStrategy()">➕ Ajouter Stratégie</button>
+                </div>
+
+                <div class="config-list">
+                    <h3 style="font-size: 14px; color: #374151; margin-bottom: 10px;">Stratégies configurées</h3>
+                    <div id="strategiesList"></div>
+                </div>
+
+                <button class="btn btn-warning" onclick="resetDefaultStrategies()">🔄 Restaurer stratégies par défaut</button>
+            </div>
+
+            <!-- TIME SLOTS SECTION -->
+            <div class="card">
+                <h2 class="section-title">⏰ Gestion des Plages Horaires</h2>
+                
+                <div class="info-box" style="background: #dbeafe; border-left-color: #3b82f6; color: #1e40af; word-wrap: break-word; overflow-wrap: break-word;">
+                    <strong style="display: block; margin-bottom: 8px;">ℹ️ Plages horaires intelligentes</strong>
+                    <p style="margin: 0; line-height: 1.5;">
+                        Vous pouvez créer des plages horaires qui se chevauchent (ex: "7h-12h" et "11h-14h"). Le système de filtrage gère automatiquement les chevauchements : un trade à 11h30 apparaîtra dans les deux plages. Vous pouvez sélectionner plusieurs plages simultanément dans les filtres pour des analyses combinées.
+                    </p>
+                </div>
+                
+                <div class="config-form">
+                    <label style="margin-bottom: 10px; display: block;">Créer une nouvelle plage horaire</label>
+                    <div class="form-group">
+                        <input type="text" id="timeslotName" placeholder="Nom (ex: London Open)" style="margin-bottom: 10px;">
+                    </div>
+                    <div class="time-input-group" style="margin-bottom: 10px;">
+                        <input type="number" id="startHour" placeholder="HH" min="0" max="23">
+                        <span>:</span>
+                        <input type="number" id="startMinute" placeholder="MM" min="0" max="59">
+                        <span>→</span>
+                        <input type="number" id="endHour" placeholder="HH" min="0" max="23">
+                        <span>:</span>
+                        <input type="number" id="endMinute" placeholder="MM" min="0" max="59">
+                    </div>
+                    <button class="btn btn-primary" onclick="addTimeSlot()">➕ Ajouter Plage Horaire</button>
+                </div>
+
+                <div class="config-list">
+                    <h3 style="font-size: 14px; color: #374151; margin-bottom: 10px;">Plages horaires configurées</h3>
+                    <div id="timeslotsList"></div>
+                </div>
+
+                <button class="btn btn-warning" onclick="resetDefaultTimeSlots()">🔄 Restaurer plages par défaut</button>
+            </div>
+
+            <!-- VERSION INFO -->
+            <div class="card">
+                <h2 class="section-title">ℹ️ Informations</h2>
+                
+                <div style="padding: 15px; background: #f9fafb; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <strong style="color: #374151;">Version</strong>
+                        <span id="appVersion" style="color: #667eea; font-weight: 600;">v1.5.0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <strong style="color: #374151;">Date de version</strong>
+                        <span id="versionDate" style="color: #6b7280;">2025-01-23</span>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 1.8.2</strong>
+                        <ul style="font-size: 13px; color: #6b7280; margin: 0; padding-left: 20px; line-height: 1.6;">
+                            <li>🎨 <strong>Amélioration espacement News</strong> : Gap augmenté (25px) + white-space pour texte sur une ligne</li>
+                            <li>🎨 <strong>Correction mise en page Config</strong> : Ajout word-wrap et line-height aux info-box</li>
+                        </ul>
+                        <details style="margin-top: 10px;">
+                            <summary style="cursor: pointer; color: #667eea; font-weight: 600;">Versions précédentes</summary>
+                            <div style="margin-top: 8px; padding-left: 10px; border-left: 2px solid #e5e7eb;">
+                                <strong style="font-size: 12px; color: #6b7280;">v1.8.1 - Corrections bugs</strong>
+                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
+                                    <li>Réinitialisation champ News</li>
+                                    <li>Filtres News fonctionnels</li>
+                                </ul>
+                                <strong style="font-size: 12px; color: #6b7280;">v1.8.0 - Impact des News</strong>
+                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
+                                    <li>Champ News (3 options)</li>
+                                    <li>Filtres repliables</li>
+                                    <li>Mode compact (4-5 trades)</li>
+                                </ul>
+                                <strong style="font-size: 12px; color: #6b7280;">v1.7.0 - Calcul intelligent</strong>
+                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
+                                    <li>Formules mathématiques</li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== VERSION ==========
+        const APP_VERSION = '1.8.2';
+        const VERSION_DATE = '2025-01-23';
+        
+        // ========== PWA Service Worker ==========
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(function(registration) {
+                        console.log('Service Worker enregistré avec succès:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Échec de l\'enregistrement du Service Worker:', error);
+                    });
+            });
+        }
+        
+        // ========== IndexedDB Configuration ==========
+        const DB_NAME = 'TradingJournalDB';
+        const DB_VERSION = 1;
+        let db = null;
+
+        // Initialiser IndexedDB
+        function initDB() {
+            return new Promise(function(resolve, reject) {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = function() {
+                    reject('Erreur lors de l\'ouverture de la base de données');
+                };
+
+                request.onsuccess = function(event) {
+                    db = event.target.result;
+                    showBackupMessage('✅ Base de données sécurisée chargée', 'success');
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+
+                    // Store pour les trades
+                    if (!db.objectStoreNames.contains('trades')) {
+                        db.createObjectStore('trades', { keyPath: 'id' });
+                    }
+
+                    // Store pour la config
+                    if (!db.objectStoreNames.contains('config')) {
+                        db.createObjectStore('config', { keyPath: 'key' });
+                    }
+
+                    // Store pour les backups
+                    if (!db.objectStoreNames.contains('backups')) {
+                        const backupStore = db.createObjectStore('backups', { keyPath: 'timestamp' });
+                        backupStore.createIndex('date', 'timestamp', { unique: false });
+                    }
+                };
+            });
+        }
+
+        // Sauvegarder les trades
+        function saveTradesDB(tradesArray) {
+            return new Promise(function(resolve, reject) {
+                const transaction = db.transaction(['trades'], 'readwrite');
+                const store = transaction.objectStore('trades');
+
+                // Vider le store
+                const clearRequest = store.clear();
+
+                clearRequest.onsuccess = function() {
+                    // Ajouter tous les trades
+                    tradesArray.forEach(function(trade) {
+                        store.put(trade);
+                    });
+                };
+
+                transaction.oncomplete = function() {
+                    resolve();
+                };
+
+                transaction.onerror = function() {
+                    reject('Erreur lors de la sauvegarde');
+                };
+            });
+        }
+
+        // Charger les trades
+        function loadTradesDB() {
+            return new Promise(function(resolve, reject) {
+                const transaction = db.transaction(['trades'], 'readonly');
+                const store = transaction.objectStore('trades');
+                const request = store.getAll();
+
+                request.onsuccess = function() {
+                    resolve(request.result || []);
+                };
+
+                request.onerror = function() {
+                    reject('Erreur lors du chargement');
+                };
+            });
+        }
+
+        // Sauvegarder la config
+        function saveConfigDB(key, value) {
+            return new Promise(function(resolve, reject) {
+                const transaction = db.transaction(['config'], 'readwrite');
+                const store = transaction.objectStore('config');
+                const request = store.put({ key: key, value: value });
+
+                request.onsuccess = function() {
+                    resolve();
+                };
+
+                request.onerror = function() {
+                    reject('Erreur lors de la sauvegarde de la config');
+                };
+            });
+        }
+
+        // Charger la config
+        function loadConfigDB(key) {
+            return new Promise(function(resolve, reject) {
+                const transaction = db.transaction(['config'], 'readonly');
+                const store = transaction.objectStore('config');
+                const request = store.get(key);
+
+                request.onsuccess = function() {
+                    resolve(request.result ? request.result.value : null);
+                };
+
+                request.onerror = function() {
+                    reject('Erreur lors du chargement de la config');
+                };
+            });
+        }
+
+        // Créer un backup automatique
+        function createAutoBackup() {
+            const backup = {
+                timestamp: Date.now(),
+                date: new Date().toISOString(),
+                trades: trades,
+                config: {
+                    assets: assets,
+                    brokers: brokers,
+                    strategies: strategies,
+                    timeSlots: timeSlots,
+                    initialCapital: document.getElementById('initialCapital').value
+                }
+            };
+
+            const transaction = db.transaction(['backups'], 'readwrite');
+            const store = transaction.objectStore('backups');
+            store.put(backup);
+
+            // Garder seulement les 10 derniers backups
+            const getAllRequest = store.getAll();
+            getAllRequest.onsuccess = function() {
+                const allBackups = getAllRequest.result;
+                if (allBackups.length > 10) {
+                    allBackups.sort(function(a, b) { return a.timestamp - b.timestamp; });
+                    for (let i = 0; i < allBackups.length - 10; i++) {
+                        store.delete(allBackups[i].timestamp);
+                    }
+                }
+            };
+        }
+
+        // Afficher message de backup
+        function showBackupMessage(message, type) {
+            const statusEl = document.getElementById('backupStatus');
+            statusEl.textContent = message;
+            statusEl.className = 'backup-status show ' + (type === 'warning' ? 'warning' : '');
+            
+            setTimeout(function() {
+                statusEl.classList.remove('show');
+            }, 3000);
+        }
+
+        // Variables globales
+        let currentResult = null;
+        let trades = [];
+        let charts = {};
+        let timeSlots = [];
+        let strategies = [];
+        let assets = [];
+        let brokers = [];
+        
+        const filters = {
+            assets: new Set(),
+            brokers: new Set(),
+            strategies: new Set(),
+            directions: new Set(),
+            status: new Set(),
+            news: new Set(),
+            days: new Set(),
+            times: new Set()
+        };
+
+        const analysisFilters = {
+            assets: new Set(),
+            brokers: new Set(),
+            strategies: new Set(),
+            directions: new Set(),
+            status: new Set(),
+            news: new Set(),
+            days: new Set(),
+            times: new Set()
+        };
+
+        const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+        
+        const defaultTimeSlots = [
+            { label: 'Nuit (0h-6h)', startHour: 0, startMinute: 0, endHour: 6, endMinute: 0 },
+            { label: 'Matin (6h-12h)', startHour: 6, startMinute: 0, endHour: 12, endMinute: 0 },
+            { label: 'Après-midi (12h-18h)', startHour: 12, startMinute: 0, endHour: 18, endMinute: 0 },
+            { label: 'Soir (18h-24h)', startHour: 18, startMinute: 0, endHour: 24, endMinute: 0 }
+        ];
+
+        const defaultStrategies = [
+            'Momentum Hunt Mean Reversion',
+            'Momentum Hunt Trend Following',
+            'EMA Cross Dual',
+            'Imbalance Detector',
+            'Liquidity Hunt'
+        ];
+
+        const defaultAssets = [
+            'NAS100',
+            'US30',
+            'US500',
+            'EUR/USD',
+            'GBP/USD',
+            'Gold',
+            'Bitcoin'
+        ];
+
+        const defaultBrokers = [
+            'FTMO',
+            'The5ers',
+            'Funded Next',
+            'Interactive Brokers',
+            'Demo'
+        ];
+
+        // Initialisation
+        async function init() {
+            try {
+                await initDB();
+                await loadAssets();
+                await loadBrokers();
+                await loadStrategies();
+                await loadTimeSlots();
+                await loadTrades();
+                setCurrentDateTime();
+                await loadCapital();
+                await loadDefaultFees();
+                await loadDefaultRisk();
+                updateAssetDropdown();
+                updateBrokerDropdown();
+                updateStrategyDropdown();
+                updateStats();
+                displayTrades();
+                initializeFilters();
+                restoreFiltersState();
+                displayAssets();
+                displayBrokers();
+                displayStrategies();
+                displayTimeSlots();
+                
+                // Afficher la version
+                displayVersion();
+
+                // Backup automatique toutes les 30 minutes
+                setInterval(createAutoBackup, 30 * 60 * 1000);
+                
+                // Premier backup après 1 minute
+                setTimeout(createAutoBackup, 60 * 1000);
+
+            } catch (error) {
+                console.error('Erreur d\'initialisation:', error);
+                showBackupMessage('⚠️ Erreur de chargement', 'warning');
+            }
+        }
+
+        function displayVersion() {
+            const versionEl = document.getElementById('appVersion');
+            const dateEl = document.getElementById('versionDate');
+            if (versionEl) versionEl.textContent = 'v' + APP_VERSION;
+            if (dateEl) dateEl.textContent = VERSION_DATE;
+        }
+
+        // ASSETS MANAGEMENT
+        async function loadAssets() {
+            const saved = await loadConfigDB('assets');
+            if (saved) {
+                assets = saved;
+            } else {
+                assets = [...defaultAssets];
+                await saveAssets();
+            }
+        }
+
+        async function saveAssets() {
+            await saveConfigDB('assets', assets);
+        }
+
+        async function addAsset() {
+            const name = document.getElementById('assetName').value.trim();
+
+            if (!name) {
+                alert('Veuillez entrer un nom d\'actif');
+                return;
+            }
+
+            if (assets.includes(name)) {
+                alert('Cet actif existe déjà');
+                return;
+            }
+
+            assets.push(name);
+            await saveAssets();
+            displayAssets();
+            updateAssetDropdown();
+            initializeFilters();
+
+            document.getElementById('assetName').value = '';
+        }
+
+        async function deleteAsset(index) {
+            const assetName = assets[index];
+            
+            const isUsed = trades.some(function(t) { return t.asset === assetName; });
+            
+            if (isUsed) {
+                if (!confirm('L\'actif "' + assetName + '" est utilisé dans des trades existants. Supprimer quand même ?')) {
+                    return;
+                }
+            }
+
+            if (confirm('Supprimer l\'actif "' + assetName + '" ?')) {
+                assets.splice(index, 1);
+                await saveAssets();
+                displayAssets();
+                updateAssetDropdown();
+                initializeFilters();
+                updateStats();
+                if (document.getElementById('analysisTab').classList.contains('active')) {
+                    updateCharts();
+                }
+            }
+        }
+
+        async function resetDefaultAssets() {
+            if (confirm('Réinitialiser avec les actifs par défaut ?')) {
+                assets = [...defaultAssets];
+                await saveAssets();
+                displayAssets();
+                updateAssetDropdown();
+                initializeFilters();
+            }
+        }
+
+        function displayAssets() {
+            const container = document.getElementById('assetsList');
+            container.innerHTML = assets.map(function(asset, index) {
+                return '<div class="config-item"><div><div class="config-info">' + asset + '</div></div><button class="btn-delete" onclick="deleteAsset(' + index + ')">🗑️</button></div>';
+            }).join('');
+        }
+
+        function updateAssetDropdown() {
+            const dropdown = document.getElementById('asset');
+            dropdown.innerHTML = assets.map(function(a) {
+                return '<option value="' + a + '">' + a + '</option>';
+            }).join('');
+        }
+
+        // BROKERS MANAGEMENT
+        async function loadBrokers() {
+            const saved = await loadConfigDB('brokers');
+            if (saved) {
+                brokers = saved;
+            } else {
+                brokers = [...defaultBrokers];
+                await saveBrokers();
+            }
+        }
+
+        async function saveBrokers() {
+            await saveConfigDB('brokers', brokers);
+        }
+
+        async function addBroker() {
+            const name = document.getElementById('brokerName').value.trim();
+
+            if (!name) {
+                alert('Veuillez entrer un nom de broker');
+                return;
+            }
+
+            if (brokers.includes(name)) {
+                alert('Ce broker existe déjà');
+                return;
+            }
+
+            brokers.push(name);
+            await saveBrokers();
+            displayBrokers();
+            updateBrokerDropdown();
+            initializeFilters();
+
+            document.getElementById('brokerName').value = '';
+        }
+
+        async function deleteBroker(index) {
+            const brokerName = brokers[index];
+            
+            const isUsed = trades.some(function(t) { return t.broker === brokerName; });
+            
+            if (isUsed) {
+                if (!confirm('Le broker "' + brokerName + '" est utilisé dans des trades existants. Supprimer quand même ?')) {
+                    return;
+                }
+            }
+
+            if (confirm('Supprimer le broker "' + brokerName + '" ?')) {
+                brokers.splice(index, 1);
+                await saveBrokers();
+                displayBrokers();
+                updateBrokerDropdown();
+                initializeFilters();
+                updateStats();
+                if (document.getElementById('analysisTab').classList.contains('active')) {
+                    updateCharts();
+                }
+            }
+        }
+
+        async function resetDefaultBrokers() {
+            if (confirm('Réinitialiser avec les brokers par défaut ?')) {
+                brokers = [...defaultBrokers];
+                await saveBrokers();
+                displayBrokers();
+                updateBrokerDropdown();
+                initializeFilters();
+            }
+        }
+
+        function displayBrokers() {
+            const container = document.getElementById('brokersList');
+            container.innerHTML = brokers.map(function(broker, index) {
+                return '<div class="config-item"><div><div class="config-info">' + broker + '</div></div><button class="btn-delete" onclick="deleteBroker(' + index + ')">🗑️</button></div>';
+            }).join('');
+        }
+
+        function updateBrokerDropdown() {
+            const dropdown = document.getElementById('broker');
+            dropdown.innerHTML = brokers.map(function(b) {
+                return '<option value="' + b + '">' + b + '</option>';
+            }).join('');
+        }
+
+        // STRATEGIES MANAGEMENT
+        async function loadStrategies() {
+            const saved = await loadConfigDB('strategies');
+            if (saved) {
+                strategies = saved;
+            } else {
+                strategies = [...defaultStrategies];
+                await saveStrategies();
+            }
+        }
+
+        async function saveStrategies() {
+            await saveConfigDB('strategies', strategies);
+        }
+
+        async function addStrategy() {
+            const name = document.getElementById('strategyName').value.trim();
+
+            if (!name) {
+                alert('Veuillez entrer un nom de stratégie');
+                return;
+            }
+
+            if (strategies.includes(name)) {
+                alert('Cette stratégie existe déjà');
+                return;
+            }
+
+            strategies.push(name);
+            await saveStrategies();
+            displayStrategies();
+            updateStrategyDropdown();
+            initializeFilters();
+
+            document.getElementById('strategyName').value = '';
+        }
+
+        async function deleteStrategy(index) {
+            const strategyName = strategies[index];
+            
+            const isUsed = trades.some(function(t) { return t.strategy === strategyName; });
+            
+            if (isUsed) {
+                if (!confirm('La stratégie "' + strategyName + '" est utilisée dans des trades existants. Supprimer quand même ?')) {
+                    return;
+                }
+            }
+
+            if (confirm('Supprimer la stratégie "' + strategyName + '" ?')) {
+                strategies.splice(index, 1);
+                await saveStrategies();
+                displayStrategies();
+                updateStrategyDropdown();
+                initializeFilters();
+                updateStats();
+                if (document.getElementById('analysisTab').classList.contains('active')) {
+                    updateCharts();
+                }
+            }
+        }
+
+        async function resetDefaultStrategies() {
+            if (confirm('Réinitialiser avec les stratégies par défaut ?')) {
+                strategies = [...defaultStrategies];
+                await saveStrategies();
+                displayStrategies();
+                updateStrategyDropdown();
+                initializeFilters();
+            }
+        }
+
+        function displayStrategies() {
+            const container = document.getElementById('strategiesList');
+            container.innerHTML = strategies.map(function(strategy, index) {
+                return '<div class="config-item"><div><div class="config-info">' + strategy + '</div></div><button class="btn-delete" onclick="deleteStrategy(' + index + ')">🗑️</button></div>';
+            }).join('');
+        }
+
+        function updateStrategyDropdown() {
+            const dropdown = document.getElementById('strategy');
+            dropdown.innerHTML = strategies.map(function(s) {
+                return '<option value="' + s + '">' + s + '</option>';
+            }).join('');
+        }
+
+        // TIME SLOTS MANAGEMENT
+        async function loadTimeSlots() {
+            const saved = await loadConfigDB('timeSlots');
+            if (saved) {
+                timeSlots = saved;
+            } else {
+                timeSlots = [...defaultTimeSlots];
+                await saveTimeSlots();
+            }
+        }
+
+        async function saveTimeSlots() {
+            await saveConfigDB('timeSlots', timeSlots);
+        }
+
+        async function addTimeSlot() {
+            const name = document.getElementById('timeslotName').value.trim();
+            const startHour = parseInt(document.getElementById('startHour').value);
+            const startMinute = parseInt(document.getElementById('startMinute').value) || 0;
+            const endHour = parseInt(document.getElementById('endHour').value);
+            const endMinute = parseInt(document.getElementById('endMinute').value) || 0;
+
+            if (!name || isNaN(startHour) || isNaN(endHour)) {
+                alert('Veuillez remplir tous les champs');
+                return;
+            }
+
+            if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23 ||
+                startMinute < 0 || startMinute > 59 || endMinute < 0 || endMinute > 59) {
+                alert('Heures invalides (0-23) ou minutes invalides (0-59)');
+                return;
+            }
+
+            const startTime = startHour * 60 + startMinute;
+            const endTime = endHour * 60 + endMinute;
+
+            if (startTime >= endTime) {
+                alert('L\'heure de début doit être avant l\'heure de fin');
+                return;
+            }
+
+            const timeSlot = {
+                label: name + ' (' + formatTime(startHour, startMinute) + '-' + formatTime(endHour, endMinute) + ')',
+                startHour: startHour,
+                startMinute: startMinute,
+                endHour: endHour,
+                endMinute: endMinute
+            };
+
+            timeSlots.push(timeSlot);
+            await saveTimeSlots();
+            displayTimeSlots();
+            initializeFilters();
+
+            document.getElementById('timeslotName').value = '';
+            document.getElementById('startHour').value = '';
+            document.getElementById('startMinute').value = '';
+            document.getElementById('endHour').value = '';
+            document.getElementById('endMinute').value = '';
+        }
+
+        // Fonction pour vérifier si une plage horaire chevauche les plages existantes
+        function checkTimeSlotOverlap(startTime, endTime, excludeIndex) {
+            for (let i = 0; i < timeSlots.length; i++) {
+                // Ignorer la plage en cours de modification
+                if (excludeIndex !== undefined && i === excludeIndex) {
+                    continue;
+                }
+                
+                const existingStart = timeSlots[i].startHour * 60 + timeSlots[i].startMinute;
+                const existingEnd = timeSlots[i].endHour * 60 + timeSlots[i].endMinute;
+                
+                // Deux plages se chevauchent si :
+                // Le début de la nouvelle est avant la fin de l'existante ET
+                // La fin de la nouvelle est après le début de l'existante
+                if (startTime < existingEnd && endTime > existingStart) {
+                    return timeSlots[i]; // Retourne la plage qui chevauche
+                }
+            }
+            return null; // Pas de chevauchement
+        }
+
+        function formatTime(hour, minute) {
+            return hour.toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0');
+        }
+
+        async function deleteTimeSlot(index) {
+            if (confirm('Supprimer cette plage horaire ?')) {
+                timeSlots.splice(index, 1);
+                await saveTimeSlots();
+                displayTimeSlots();
+                initializeFilters();
+                updateStats();
+                if (document.getElementById('analysisTab').classList.contains('active')) {
+                    updateCharts();
+                }
+            }
+        }
+
+        async function resetDefaultTimeSlots() {
+            if (confirm('Réinitialiser avec les plages horaires par défaut ?')) {
+                timeSlots = [...defaultTimeSlots];
+                await saveTimeSlots();
+                displayTimeSlots();
+                initializeFilters();
+            }
+        }
+
+        function displayTimeSlots() {
+            const container = document.getElementById('timeslotsList');
+            container.innerHTML = timeSlots.map(function(slot, index) {
+                return '<div class="config-item"><div><div class="config-info">' + slot.label + '</div></div><button class="btn-delete" onclick="deleteTimeSlot(' + index + ')">🗑️</button></div>';
+            }).join('');
+        }
+
+        // TRADES MANAGEMENT
+        // Toggle filters visibility
+        function toggleFilters(section) {
+            const filtersId = section === 'history' ? 'filtersHistory' : 'filtersAnalysis';
+            const iconId = section === 'history' ? 'filterToggleIcon' : 'filterToggleIconAnalysis';
+            const filtersElement = document.getElementById(filtersId);
+            const iconElement = document.getElementById(iconId);
+            
+            if (filtersElement.style.display === 'none') {
+                filtersElement.style.display = 'grid';
+                iconElement.textContent = '▲';
+            } else {
+                filtersElement.style.display = 'none';
+                iconElement.textContent = '▼';
+            }
+            
+            // Sauvegarder l'état
+            localStorage.setItem('filters' + section + 'Open', filtersElement.style.display === 'grid');
+        }
+
+        // Restaurer l'état des filtres au chargement
+        function restoreFiltersState() {
+            const historyOpen = localStorage.getItem('filtershistoryOpen') === 'true';
+            const analysisOpen = localStorage.getItem('filtersanalysisOpen') === 'true';
+            
+            if (historyOpen) {
+                document.getElementById('filtersHistory').style.display = 'grid';
+                document.getElementById('filterToggleIcon').textContent = '▲';
+            }
+            
+            if (analysisOpen) {
+                document.getElementById('filtersAnalysis').style.display = 'grid';
+                document.getElementById('filterToggleIconAnalysis').textContent = '▲';
+            }
+        }
+
+        function setCurrentDateTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('tradeDate').value = now.toISOString().slice(0, 16);
+        }
+
+        async function loadCapital() {
+            const saved = await loadConfigDB('initialCapital');
+            if (saved) {
+                document.getElementById('initialCapital').value = saved;
+            }
+        }
+
+        async function loadTrades() {
+            trades = await loadTradesDB();
+            
+            // Recalculer les capitaux au chargement (pour la rétrocompatibilité et la cohérence)
+            if (trades.length > 0) {
+                await recalculateCapitals();
+            }
+        }
+
+        async function saveTrades() {
+            await saveTradesDB(trades);
+        }
+
+        let editingTradeId = null;
+
+        function updateRiskPercent() {
+            const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
+            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            
+            if (capital > 0 && riskAmount > 0) {
+                const riskPercent = (riskAmount / capital) * 100;
+                document.getElementById('riskPercent').textContent = riskPercent.toFixed(2) + '%';
+                
+                // Colorer en fonction du risque
+                const riskEl = document.getElementById('riskPercent');
+                if (riskPercent > 2) {
+                    riskEl.style.background = '#fee2e2';
+                    riskEl.style.color = '#991b1b';
+                } else if (riskPercent > 1) {
+                    riskEl.style.background = '#fef3c7';
+                    riskEl.style.color = '#92400e';
+                } else {
+                    riskEl.style.background = '#d1fae5';
+                    riskEl.style.color = '#065f46';
+                }
+            } else {
+                document.getElementById('riskPercent').textContent = '0%';
+                document.getElementById('riskPercent').style.background = '#f3f4f6';
+                document.getElementById('riskPercent').style.color = '#374151';
+            }
+            
+            // Mettre à jour les frais quand le risque change
+            updateFeesAmount();
+        }
+
+        function updateFeesAmount() {
+            const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
+            const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
+            
+            if (riskAmount > 0 && feesPercent > 0) {
+                const feesAmount = riskAmount * (feesPercent / 100);
+                document.getElementById('feesAmount').textContent = feesAmount.toFixed(2) + '€';
+            } else {
+                document.getElementById('feesAmount').textContent = '0€';
+            }
+            
+            // Mettre à jour le montant net
+            updateNetAmount();
+        }
+
+        // Fonction de calcul sécurisé pour les formules dans le champ montant
+        function safeCalculate(expression) {
+            if (!expression || expression.trim() === '') {
+                return 0;
+            }
+            
+            // Nettoyer l'expression : n'autoriser que chiffres, +, -, *, /, ., (, ), espaces
+            const cleaned = expression.replace(/[^0-9+\-*/().\s]/g, '');
+            
+            if (!cleaned) {
+                return 0;
+            }
+            
+            try {
+                // Utiliser Function au lieu de eval (plus sûr)
+                const result = Function('"use strict"; return (' + cleaned + ')')();
+                return isNaN(result) ? 0 : parseFloat(result);
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        // Mise à jour du calcul du montant en temps réel
+        function updateAmountCalculation() {
+            const input = document.getElementById('amount').value;
+            const resultDisplay = document.getElementById('amountCalculationResult');
+            
+            if (!input || input.trim() === '') {
+                resultDisplay.style.display = 'none';
+                return;
+            }
+            
+            // Détecter si c'est une formule (contient +, -, *, /)
+            if (/[+\-*/]/.test(input)) {
+                const result = safeCalculate(input);
+                resultDisplay.textContent = '= ' + result.toFixed(2) + '€';
+                resultDisplay.style.display = 'block';
+                resultDisplay.style.color = result >= 0 ? '#059669' : '#dc2626';
+                resultDisplay.style.fontWeight = '600';
+            } else {
+                resultDisplay.style.display = 'none';
+            }
+            
+            // Mettre à jour le montant net
+            updateNetAmount();
+        }
+
+        function updateRiskReward() {
+            const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            
+            if (riskAmount > 0 && amount > 0) {
+                const rr = amount / riskAmount;
+                document.getElementById('riskReward').textContent = 'R:R ' + rr.toFixed(2);
+                
+                // Colorer en fonction du ratio
+                const rrEl = document.getElementById('riskReward');
+                if (rr >= 2) {
+                    rrEl.style.background = '#d1fae5';
+                    rrEl.style.color = '#065f46';
+                } else if (rr >= 1) {
+                    rrEl.style.background = '#fef3c7';
+                    rrEl.style.color = '#92400e';
+                } else {
+                    rrEl.style.background = '#fee2e2';
+                    rrEl.style.color = '#991b1b';
+                }
+            } else {
+                document.getElementById('riskReward').textContent = 'R:R 0';
+                document.getElementById('riskReward').style.background = '#f3f4f6';
+                document.getElementById('riskReward').style.color = '#374151';
+            }
+            
+            // Mettre à jour le montant net
+            updateNetAmount();
+        }
+
+        function updateNetAmount() {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
+            const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
+            
+            if (amount > 0 && riskAmount > 0 && feesPercent > 0 && currentResult) {
+                const feesAmount = riskAmount * (feesPercent / 100);
+                let netAmount;
+                
+                if (currentResult === 'win') {
+                    netAmount = amount - feesAmount;  // Gain - frais
+                } else {
+                    netAmount = amount + feesAmount;  // Perte + frais
+                }
+                
+                document.getElementById('netAmountValue').textContent = netAmount.toFixed(2) + '€';
+                document.getElementById('netAmount').style.display = 'block';
+                
+                // Colorer selon gain/perte net
+                const netEl = document.getElementById('netAmount');
+                if (currentResult === 'win') {
+                    netEl.style.background = '#f0fdf4';
+                    netEl.style.borderLeftColor = '#10b981';
+                    netEl.style.color = '#065f46';
+                } else {
+                    netEl.style.background = '#fef2f2';
+                    netEl.style.borderLeftColor = '#ef4444';
+                    netEl.style.color = '#991b1b';
+                }
+            } else {
+                document.getElementById('netAmount').style.display = 'none';
+            }
+        }
+
+        async function loadDefaultFees() {
+            const saved = await loadConfigDB('defaultFees');
+            if (saved !== null) {
+                document.getElementById('defaultFees').value = saved;
+            } else {
+                document.getElementById('defaultFees').value = '0.5';
+            }
+            
+            // Pré-remplir le champ frais dans le formulaire avec la valeur par défaut
+            const defaultFees = parseFloat(document.getElementById('defaultFees').value) || 0;
+            document.getElementById('feesPercent').value = defaultFees;
+        }
+
+        async function loadDefaultRisk() {
+            const saved = await loadConfigDB('defaultRisk');
+            if (saved !== null) {
+                document.getElementById('defaultRisk').value = saved;
+            } else {
+                document.getElementById('defaultRisk').value = '50';
+            }
+            
+            // Pré-remplir le champ risque dans le formulaire avec la valeur par défaut
+            const defaultRisk = parseFloat(document.getElementById('defaultRisk').value) || 0;
+            document.getElementById('riskAmount').value = defaultRisk;
+            
+            // Mettre à jour les calculs après avoir pré-rempli
+            updateRiskPercent();
+        }
+
+        function setResult(type) {
+            currentResult = type;
+            document.querySelectorAll('.btn-result').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            const label = document.getElementById('amountLabel');
+            label.textContent = type === 'win' ? 'Gain (€)' : 'Perte (€)';
+            
+            // Recalculer le montant net avec le nouveau résultat
+            updateNetAmount();
+        }
+
+        async function saveTrade(status = 'completed') {
+            const date = document.getElementById('tradeDate').value;
+            const asset = document.getElementById('asset').value;
+            const broker = document.getElementById('broker').value;
+            const strategy = document.getElementById('strategy').value;
+            const direction = document.getElementById('direction').value;
+            const newsImpact = document.querySelector('input[name="newsImpact"]:checked').value;
+            const riskAmount = parseFloat(document.getElementById('riskAmount').value);
+            const amountInput = document.getElementById('amount').value.trim();
+            const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
+            const notes = document.getElementById('notes').value;
+            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+
+            // Calculer le montant à partir de la formule
+            const amount = safeCalculate(amountInput);
+            const amountFormula = amountInput; // Stocker la formule originale
+
+            // Validation selon le status
+            if (status === 'pending') {
+                // Pour un trade en attente, seuls ces champs sont requis
+                if (!date || !asset || !broker || !strategy || !direction || !riskAmount) {
+                    alert('⚠️ Champs obligatoires pour un trade en attente :\n- Date\n- Actif\n- Broker\n- Stratégie\n- Direction\n- Risque');
+                    return;
+                }
+            } else {
+                // Pour un trade complété, tout est requis
+                if (!date || !currentResult || !amountInput || !riskAmount) {
+                    alert('Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+            }
+
+            await saveConfigDB('initialCapital', capital);
+
+            // Calculs seulement si le trade est complété
+            let feesAmount = 0;
+            let netAmount = 0;
+            let pnl = 0;
+            let riskReward = 0;
+
+            if (status === 'completed') {
+                // Calcul des frais
+                feesAmount = riskAmount * (feesPercent / 100);
+                
+                // Calcul du montant net selon win/loss
+                if (currentResult === 'win') {
+                    netAmount = amount - feesAmount;  // Gain - frais
+                } else {
+                    netAmount = amount + feesAmount;  // Perte + frais (on perd plus !)
+                }
+                
+                pnl = currentResult === 'win' ? netAmount : -netAmount;
+                
+                // R:R seulement pour les wins
+                riskReward = currentResult === 'win' ? (amount / riskAmount) : 0;
+            }
+
+            const riskPercent = (riskAmount / capital) * 100;
+
+            if (editingTradeId !== null) {
+                // MODE ÉDITION
+                const tradeIndex = trades.findIndex(function(t) { return t.id === editingTradeId; });
+                
+                if (tradeIndex !== -1) {
+                    const originalStatus = trades[tradeIndex].status;
+                    
+                    // Mettre à jour le trade
+                    trades[tradeIndex] = {
+                        id: editingTradeId,
+                        date: date,
+                        asset: asset,
+                        broker: broker,
+                        strategy: strategy,
+                        direction: direction,
+                        newsImpact: newsImpact,
+                        result: status === 'completed' ? currentResult : null,
+                        riskAmount: riskAmount,
+                        riskPercent: riskPercent,
+                        riskReward: riskReward,
+                        amount: amount, // Montant calculé (peut être non nul en pending)
+                        amountFormula: amountFormula, // Formule originale
+                        feesPercent: feesPercent,
+                        feesAmount: feesAmount,
+                        netAmount: netAmount,
+                        pnl: pnl,
+                        percentReturn: 0, // Sera recalculé
+                        capitalAfter: 0, // Sera recalculé
+                        capitalBefore: 0, // Sera recalculé
+                        notes: notes,
+                        status: status,
+                        pendingSince: trades[tradeIndex].pendingSince || (status === 'pending' ? new Date().toISOString() : null),
+                        resolvedAt: status === 'completed' ? new Date().toISOString() : null,
+                        timestamp: trades[tradeIndex].timestamp,
+                        editedAt: new Date().toISOString()
+                    };
+
+                    // Recalculer tous les capitaux en ordre chronologique
+                    await recalculateCapitals();
+                    
+                    if (originalStatus === 'pending' && status === 'completed') {
+                        showBackupMessage('✅ Trade résolu avec succès', 'success');
+                    } else {
+                        showBackupMessage('✅ Trade modifié avec succès', 'success');
+                    }
+                    cancelEdit();
+                }
+            } else {
+                // MODE NOUVEAU TRADE
+                const trade = {
+                    id: Date.now(),
+                    date: date,
+                    asset: asset,
+                    broker: broker,
+                    strategy: strategy,
+                    direction: direction,
+                    newsImpact: newsImpact,
+                    result: status === 'completed' ? currentResult : null,
+                    riskAmount: riskAmount,
+                    riskPercent: riskPercent,
+                    riskReward: riskReward,
+                    amount: amount, // Montant calculé (peut être non nul en pending)
+                    amountFormula: amountFormula, // Formule originale
+                    feesPercent: feesPercent,
+                    feesAmount: feesAmount,
+                    netAmount: netAmount,
+                    pnl: pnl,
+                    percentReturn: 0, // Sera recalculé
+                    capitalAfter: 0, // Sera recalculé
+                    capitalBefore: 0, // Sera recalculé
+                    notes: notes,
+                    status: status,
+                    pendingSince: status === 'pending' ? new Date().toISOString() : null,
+                    resolvedAt: status === 'completed' ? new Date().toISOString() : null,
+                    timestamp: new Date().toISOString()
+                };
+
+                trades.push(trade);
+                
+                // Recalculer tous les capitaux en ordre chronologique
+                await recalculateCapitals();
+                
+                if (status === 'pending') {
+                    showBackupMessage('⏳ Trade enregistré en attente', 'warning');
+                } else {
+                    showBackupMessage('✅ Trade sauvegardé en sécurité', 'success');
+                }
+            }
+
+            updateStats();
+            displayTrades();
+            initializeFilters();
+
+            document.getElementById('amount').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('riskReward').textContent = 'R:R 0';
+            document.getElementById('feesAmount').textContent = '0€';
+            document.getElementById('netAmount').style.display = 'none';
+            
+            // Recharger les valeurs par défaut pour le prochain trade
+            const defaultRisk = parseFloat(document.getElementById('defaultRisk').value) || 50;
+            document.getElementById('riskAmount').value = defaultRisk;
+            updateRiskPercent();
+            
+            const defaultFees = parseFloat(document.getElementById('defaultFees').value) || 0;
+            document.getElementById('feesPercent').value = defaultFees;
+            updateFeesAmount();
+            
+            currentResult = null;
+            document.querySelectorAll('.btn-result').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            setCurrentDateTime();
+
+            switchTab('history');
+        }
+
+        function editTrade(tradeId) {
+            const trade = trades.find(function(t) { return t.id === tradeId; });
+            
+            if (!trade) {
+                alert('Trade introuvable');
+                return;
+            }
+
+            // Passer en mode édition
+            editingTradeId = tradeId;
+            
+            // Afficher le bandeau d'édition
+            document.getElementById('editMode').style.display = 'block';
+            document.getElementById('editingTradeId').textContent = '#' + tradeId;
+            
+            // Adapter le titre selon le statut
+            if (trade.status === 'pending') {
+                document.getElementById('formTitle').textContent = 'Modifier un Trade en Attente';
+                document.getElementById('saveButton').textContent = '✏️ Mettre à jour';
+            } else {
+                document.getElementById('formTitle').textContent = 'Modifier un Trade';
+                document.getElementById('saveButton').textContent = '✏️ Mettre à jour';
+            }
+
+            // Remplir le formulaire avec les données du trade
+            document.getElementById('tradeDate').value = trade.date;
+            document.getElementById('asset').value = trade.asset;
+            document.getElementById('broker').value = trade.broker;
+            document.getElementById('strategy').value = trade.strategy;
+            document.getElementById('direction').value = trade.direction || 'long';
+            
+            // Pré-remplir news (rétrocompatibilité: none par défaut)
+            const newsValue = trade.newsImpact || 'none';
+            document.querySelector('input[name="newsImpact"][value="' + newsValue + '"]').checked = true;
+            
+            document.getElementById('riskAmount').value = trade.riskAmount || (trade.riskPercent ? (trade.riskPercent / 100 * 10000).toFixed(2) : '');
+            document.getElementById('feesPercent').value = trade.feesPercent || 0;
+            document.getElementById('notes').value = trade.notes || '';
+
+            // Pour les trades complétés, remplir le résultat et le montant
+            if (trade.status === 'completed' || !trade.status) {
+                // Utiliser la formule si elle existe, sinon le montant
+                document.getElementById('amount').value = trade.amountFormula || trade.amount;
+                
+                // Mettre à jour les calculs affichés
+                updateRiskPercent();
+                updateFeesAmount();
+                updateRiskReward();
+                updateAmountCalculation();
+
+                // Sélectionner le bon résultat
+                currentResult = trade.result;
+                document.querySelectorAll('.btn-result').forEach(function(btn) {
+                    btn.classList.remove('active');
+                    if ((btn.classList.contains('win') && trade.result === 'win') ||
+                        (btn.classList.contains('loss') && trade.result === 'loss')) {
+                        btn.classList.add('active');
+                    }
+                });
+
+                const label = document.getElementById('amountLabel');
+                label.textContent = trade.result === 'win' ? 'Gain (€)' : 'Perte (€)';
+            } else {
+                // Pour les trades pending, pré-remplir avec les TPs existants si présents
+                document.getElementById('amount').value = trade.amountFormula || (trade.amount > 0 ? trade.amount : '');
+                updateAmountCalculation();
+                currentResult = null;
+                document.querySelectorAll('.btn-result').forEach(function(btn) {
+                    btn.classList.remove('active');
+                });
+                
+                updateRiskPercent();
+                updateFeesAmount();
+            }
+
+            // Passer à l'onglet entry
+            switchTab('entry');
+            
+            // Scroll vers le haut
+            window.scrollTo(0, 0);
+        }
+
+        function cancelEdit() {
+            editingTradeId = null;
+            document.getElementById('editMode').style.display = 'none';
+            document.getElementById('formTitle').textContent = 'Enregistrer un Trade';
+            document.getElementById('saveButton').textContent = '💾 Enregistrer';
+            
+            // Vider le formulaire
+            document.getElementById('amount').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('riskReward').textContent = 'R:R 0';
+            document.getElementById('feesAmount').textContent = '0€';
+            document.getElementById('netAmount').style.display = 'none';
+            
+            // Recharger les valeurs par défaut
+            const defaultRisk = parseFloat(document.getElementById('defaultRisk').value) || 50;
+            document.getElementById('riskAmount').value = defaultRisk;
+            updateRiskPercent();
+            
+            const defaultFees = parseFloat(document.getElementById('defaultFees').value) || 0;
+            document.getElementById('feesPercent').value = defaultFees;
+            updateFeesAmount();
+            
+            // Réinitialiser le champ news à "Pas de news" par défaut
+            document.querySelector('input[name="newsImpact"][value="none"]').checked = true;
+            
+            currentResult = null;
+            document.querySelectorAll('.btn-result').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            setCurrentDateTime();
+        }
+
+        function resolveTrade(tradeId) {
+            const trade = trades.find(function(t) { return t.id === tradeId; });
+            
+            if (!trade) {
+                alert('Trade introuvable');
+                return;
+            }
+
+            if (trade.status !== 'pending') {
+                alert('Ce trade est déjà résolu');
+                return;
+            }
+
+            // Passer en mode édition pour ce trade
+            editingTradeId = trade.id;
+            
+            // Pré-remplir le formulaire avec les données existantes
+            document.getElementById('tradeDate').value = trade.date;
+            document.getElementById('asset').value = trade.asset;
+            document.getElementById('broker').value = trade.broker;
+            document.getElementById('strategy').value = trade.strategy;
+            document.getElementById('direction').value = trade.direction || 'long';
+            
+            // Pré-remplir news (rétrocompatibilité: none par défaut)
+            const newsValue = trade.newsImpact || 'none';
+            document.querySelector('input[name="newsImpact"][value="' + newsValue + '"]').checked = true;
+            
+            document.getElementById('riskAmount').value = trade.riskAmount;
+            document.getElementById('feesPercent').value = trade.feesPercent || 0;
+            document.getElementById('notes').value = trade.notes || '';
+            
+            // Pré-remplir le montant avec les TPs existants (formule ou montant)
+            document.getElementById('amount').value = trade.amountFormula || (trade.amount > 0 ? trade.amount : '');
+            
+            // Mettre à jour les calculs dérivés
+            updateRiskPercent();
+            updateFeesAmount();
+            updateAmountCalculation();
+            
+            // Afficher le bandeau de résolution
+            document.getElementById('editMode').style.display = 'block';
+            document.getElementById('formTitle').textContent = '✅ Résoudre le Trade';
+            document.getElementById('saveButton').textContent = '✅ Valider la Résolution';
+            
+            // Scroll vers le formulaire
+            switchTab('entry');
+            document.getElementById('entryTab').scrollIntoView({ behavior: 'smooth' });
+            
+            // Focus sur le champ résultat (l'utilisateur doit juste choisir Win/Loss et montant)
+            showBackupMessage('ℹ️ Sélectionnez le résultat et complétez/ajustez le montant si nécessaire', 'info');
+        }
+
+        async function deleteTrade(tradeId) {
+            const trade = trades.find(function(t) { return t.id === tradeId; });
+            
+            if (!trade) {
+                alert('Trade introuvable');
+                return;
+            }
+
+            const date = new Date(trade.date);
+            const dateStr = date.toLocaleDateString('fr-FR', { 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const confirmMsg = 'Supprimer ce trade ?\n\n' +
+                'Date: ' + dateStr + '\n' +
+                'Actif: ' + trade.asset + '\n' +
+                'Stratégie: ' + trade.strategy + '\n' +
+                'Montant: ' + (trade.result === 'win' ? '+' : '-') + trade.amount + '€';
+
+            if (confirm(confirmMsg)) {
+                trades = trades.filter(function(t) { return t.id !== tradeId; });
+                
+                // Recalculer les capitaux après suppression
+                await recalculateCapitals();
+                
+                updateStats();
+                displayTrades();
+                initializeFilters();
+                calculateStorageSize();
+                showBackupMessage('✅ Trade supprimé', 'success');
+            }
+        }
+
+        // Recalculer tous les capitaux en ordre chronologique
+        async function recalculateCapitals() {
+            if (trades.length === 0) return;
+
+            const initialCapital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            
+            // Trier les trades par date (du plus ancien au plus récent)
+            const sortedTrades = trades.slice().sort(function(a, b) {
+                return new Date(a.date) - new Date(b.date);
+            });
+
+            let currentCapital = initialCapital;
+
+            // Recalculer le capital pour chaque trade dans l'ordre chronologique
+            sortedTrades.forEach(function(trade) {
+                const capitalBeforeTrade = currentCapital;
+                currentCapital += trade.pnl;
+                
+                // Mettre à jour le capital du trade (capital APRÈS le trade)
+                trade.capitalAfter = currentCapital;
+                trade.capitalBefore = capitalBeforeTrade;
+                
+                // Recalculer le % return basé sur le capital avant
+                trade.percentReturn = (trade.pnl / capitalBeforeTrade) * 100;
+            });
+
+            // Sauvegarder les trades avec les capitaux recalculés
+            await saveTrades();
+        }
+
+        function calculateDrawdown(trades) {
+            if (trades.length === 0) return { maxDD: 0, maxDDPercent: 0 };
+
+            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            
+            // Trier par date pour calculer le drawdown correctement
+            const sortedTrades = trades.slice().sort(function(a, b) {
+                return new Date(a.date) - new Date(b.date);
+            });
+            
+            let peak = capital;
+            let maxDD = 0;
+            let maxDDPercent = 0;
+            let currentCapital = capital;
+
+            sortedTrades.forEach(function(trade) {
+                currentCapital += trade.pnl;
+                
+                if (currentCapital > peak) {
+                    peak = currentCapital;
+                }
+                
+                const drawdown = peak - currentCapital;
+                const drawdownPercent = (drawdown / peak) * 100;
+                
+                if (drawdown > maxDD) {
+                    maxDD = drawdown;
+                    maxDDPercent = drawdownPercent;
+                }
+            });
+
+            return { maxDD: maxDD, maxDDPercent: maxDDPercent };
+        }
+
+        function updateStats() {
+            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            const filteredTrades = getFilteredTrades(filters);
+            
+            // Exclure les trades pending des statistiques
+            const completedTrades = filteredTrades.filter(function(t) { 
+                return t.status !== 'pending'; 
+            });
+            
+            // Compter les trades en attente
+            const pendingCount = filteredTrades.filter(function(t) { 
+                return t.status === 'pending'; 
+            }).length;
+            
+            const totalTrades = completedTrades.length;
+            const wins = completedTrades.filter(function(t) { return t.result === 'win'; }).length;
+            const losses = completedTrades.filter(function(t) { return t.result === 'loss'; }).length;
+            const winRate = totalTrades > 0 ? (wins / totalTrades * 100).toFixed(1) : 0;
+            const totalPnL = completedTrades.reduce(function(sum, t) { return sum + t.pnl; }, 0);
+            const performance = ((totalPnL / capital) * 100).toFixed(2);
+
+            const totalWins = completedTrades.filter(function(t) { return t.result === 'win'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
+            const totalLosses = completedTrades.filter(function(t) { return t.result === 'loss'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
+            const profitFactor = totalLosses > 0 ? (totalWins / totalLosses).toFixed(2) : totalWins > 0 ? '∞' : '0';
+
+            const drawdownResult = calculateDrawdown(completedTrades);
+            const maxDDPercent = drawdownResult.maxDDPercent;
+
+            // Calcul des frais totaux
+            const totalFees = completedTrades.reduce(function(sum, t) { 
+                return sum + (t.feesAmount || 0); 
+            }, 0);
+
+            // Calcul du R:R moyen (SEULEMENT pour les wins)
+            const winTrades = completedTrades.filter(function(t) { 
+                return t.result === 'win' && t.riskReward && t.riskReward > 0; 
+            });
+            const avgRR = winTrades.length > 0 
+                ? (winTrades.reduce(function(sum, t) { return sum + t.riskReward; }, 0) / winTrades.length).toFixed(2)
+                : '0';
+
+            // Afficher le nombre de trades en attente si > 0
+            let tradesText = totalTrades.toString();
+            if (pendingCount > 0) {
+                tradesText += ' <span style="color: #f59e0b; font-size: 12px;">(+' + pendingCount + ' en attente)</span>';
+            }
+            document.getElementById('totalTrades').innerHTML = tradesText;
+            
+            document.getElementById('winRate').textContent = winRate + '%';
+            
+            const pnlElement = document.getElementById('totalPnL');
+            pnlElement.textContent = totalPnL.toFixed(2) + '€';
+            pnlElement.className = 'stat-value ' + (totalPnL >= 0 ? 'positive' : 'negative');
+
+            const perfElement = document.getElementById('performance');
+            perfElement.textContent = (totalPnL >= 0 ? '+' : '') + performance + '%';
+            perfElement.className = 'stat-value ' + (totalPnL >= 0 ? 'positive' : 'negative');
+
+            const ddElement = document.getElementById('maxDrawdown');
+            ddElement.textContent = '-' + maxDDPercent.toFixed(2) + '%';
+
+            const pfElement = document.getElementById('profitFactor');
+            pfElement.textContent = profitFactor;
+            pfElement.className = 'stat-value ' + (parseFloat(profitFactor) >= 2 ? 'positive' : parseFloat(profitFactor) >= 1 ? '' : 'negative');
+
+            document.getElementById('totalFees').textContent = totalFees.toFixed(2) + '€';
+
+            const rrElement = document.getElementById('avgRR');
+            rrElement.textContent = avgRR;
+            rrElement.className = 'stat-value ' + (parseFloat(avgRR) >= 2 ? 'positive' : parseFloat(avgRR) >= 1 ? '' : 'negative');
+        }
+
+        function getTradeDay(trade) {
+            const date = new Date(trade.date);
+            return days[date.getDay() === 0 ? 6 : date.getDay() - 1];
+        }
+
+        function getTradeTimeSlot(trade) {
+            const date = new Date(trade.date);
+            const hour = date.getHours();
+            const minute = date.getMinutes();
+            const tradeTime = hour * 60 + minute;
+
+            for (let i = 0; i < timeSlots.length; i++) {
+                const slot = timeSlots[i];
+                const startTime = slot.startHour * 60 + slot.startMinute;
+                const endTime = slot.endHour * 60 + slot.endMinute;
+                
+                if (tradeTime >= startTime && tradeTime < endTime) {
+                    return slot.label;
+                }
+            }
+
+            return 'Autre';
+        }
+
+        // Fonction pour vérifier si un trade appartient à une plage horaire spécifique
+        // Cette fonction gère les plages horaires qui se chevauchent
+        function isTradeInTimeSlot(trade, timeSlotLabel) {
+            const date = new Date(trade.date);
+            const hour = date.getHours();
+            const minute = date.getMinutes();
+            const tradeTime = hour * 60 + minute;
+
+            // Trouver la plage horaire par son label
+            const slot = timeSlots.find(function(s) { return s.label === timeSlotLabel; });
+            if (!slot) return false;
+
+            const startTime = slot.startHour * 60 + slot.startMinute;
+            const endTime = slot.endHour * 60 + slot.endMinute;
+            
+            return tradeTime >= startTime && tradeTime < endTime;
+        }
+
+        function getFilteredTrades(filterSet) {
+            return trades.filter(function(trade) {
+                const day = getTradeDay(trade);
+                const direction = trade.direction || 'long'; // Par défaut long pour rétrocompatibilité
+                const status = trade.status || 'completed'; // Par défaut completed pour rétrocompatibilité
+                const newsImpact = trade.newsImpact || 'none'; // Par défaut none pour rétrocompatibilité
+                
+                const assetMatch = filterSet.assets.size === 0 || filterSet.assets.has(trade.asset);
+                const brokerMatch = filterSet.brokers.size === 0 || filterSet.brokers.has(trade.broker);
+                const strategyMatch = filterSet.strategies.size === 0 || filterSet.strategies.has(trade.strategy);
+                const directionMatch = filterSet.directions.size === 0 || filterSet.directions.has(direction);
+                const statusMatch = filterSet.status.size === 0 || filterSet.status.has(status);
+                const newsMatch = filterSet.news.size === 0 || filterSet.news.has(newsImpact);
+                const dayMatch = filterSet.days.size === 0 || filterSet.days.has(day);
+                
+                // Pour les plages horaires, vérifier si le trade appartient à AU MOINS UNE des plages sélectionnées
+                // Cela gère correctement les plages qui se chevauchent
+                let timeMatch = filterSet.times.size === 0;
+                if (!timeMatch && filterSet.times.size > 0) {
+                    // Parcourir toutes les plages horaires sélectionnées
+                    filterSet.times.forEach(function(timeLabel) {
+                        if (isTradeInTimeSlot(trade, timeLabel)) {
+                            timeMatch = true;
+                        }
+                    });
+                }
+                
+                return assetMatch && brokerMatch && strategyMatch && directionMatch && statusMatch && newsMatch && dayMatch && timeMatch;
+            });
+        }
+
+        function initializeFilters() {
+            const usedAssets = Array.from(new Set(trades.map(function(t) { return t.asset; })));
+            const usedBrokers = Array.from(new Set(trades.map(function(t) { return t.broker; })));
+            const usedStrategies = Array.from(new Set(trades.map(function(t) { return t.strategy; })));
+            const usedDirections = Array.from(new Set(trades.map(function(t) { return t.direction || 'long'; })));
+            const timeLabels = timeSlots.map(function(s) { return s.label; });
+            
+            createCheckboxFilters('assetFilters', usedAssets, filters.assets, function() {
+                displayTrades();
+                updateStats();
+            });
+            createCheckboxFilters('brokerFilters', usedBrokers, filters.brokers, function() {
+                displayTrades();
+                updateStats();
+            });
+            createCheckboxFilters('strategyFilters', usedStrategies, filters.strategies, function() {
+                displayTrades();
+                updateStats();
+            });
+            createCheckboxFilters('directionFilters', usedDirections.map(function(d) { 
+                return d === 'long' ? '📈 Long' : '📉 Short'; 
+            }), filters.directions, function() {
+                displayTrades();
+                updateStats();
+            }, function(label) {
+                // Convertir le label affiché en valeur réelle
+                return label.includes('Long') ? 'long' : 'short';
+            });
+            createCheckboxFilters('statusFilters', ['✅ Résolus', '⏳ En attente'], filters.status, function() {
+                displayTrades();
+                updateStats();
+            }, function(label) {
+                // Convertir le label affiché en valeur réelle
+                return label.includes('Résolus') ? 'completed' : 'pending';
+            });
+            createCheckboxFilters('newsFilters', ['📰 Avant news', '📊 Après news', '🔕 Pas de news'], filters.news, function() {
+                displayTrades();
+                updateStats();
+            }, function(label) {
+                // Convertir le label affiché en valeur réelle
+                if (label.includes('Avant')) return 'before';
+                if (label.includes('Après')) return 'after';
+                return 'none';
+            });
+            createCheckboxFilters('dayFilters', days, filters.days, function() {
+                displayTrades();
+                updateStats();
+            });
+            createCheckboxFilters('timeFilters', timeLabels, filters.times, function() {
+                displayTrades();
+                updateStats();
+            });
+
+            createCheckboxFilters('assetFiltersAnalysis', usedAssets, analysisFilters.assets, updateCharts);
+            createCheckboxFilters('brokerFiltersAnalysis', usedBrokers, analysisFilters.brokers, updateCharts);
+            createCheckboxFilters('strategyFiltersAnalysis', usedStrategies, analysisFilters.strategies, updateCharts);
+            createCheckboxFilters('directionFiltersAnalysis', usedDirections.map(function(d) { 
+                return d === 'long' ? '📈 Long' : '📉 Short'; 
+            }), analysisFilters.directions, updateCharts, function(label) {
+                return label.includes('Long') ? 'long' : 'short';
+            });
+            createCheckboxFilters('newsFiltersAnalysis', ['📰 Avant news', '📊 Après news', '🔕 Pas de news'], analysisFilters.news, updateCharts, function(label) {
+                // Convertir le label affiché en valeur réelle
+                if (label.includes('Avant')) return 'before';
+                if (label.includes('Après')) return 'after';
+                return 'none';
+            });
+            createCheckboxFilters('dayFiltersAnalysis', days, analysisFilters.days, updateCharts);
+            createCheckboxFilters('timeFiltersAnalysis', timeLabels, analysisFilters.times, updateCharts);
+        }
+
+        function createCheckboxFilters(containerId, items, filterSet, onChange, valueTransformer) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = items.map(function(item, index) {
+                const displayValue = item;
+                const actualValue = valueTransformer ? valueTransformer(item) : item;
+                const escapedValue = actualValue.replace(/'/g, "\\'");
+                const checked = filterSet.has(actualValue) ? 'checked' : '';
+                
+                return '<label class="checkbox-label">' +
+                    '<input type="checkbox" ' +
+                    'value="' + actualValue + '" ' + checked + ' ' +
+                    'onchange="handleFilterChange(\'' + containerId + '\', \'' + escapedValue + '\', this.checked)">' +
+                    displayValue +
+                    '</label>';
+            }).join('');
+        }
+
+        function handleFilterChange(containerId, value, checked) {
+            const filterSet = containerId.includes('Analysis') ? analysisFilters : filters;
+            const type = containerId.includes('asset') ? 'assets' :
+                        containerId.includes('broker') ? 'brokers' :
+                        containerId.includes('strategy') ? 'strategies' : 
+                        containerId.includes('direction') ? 'directions' :
+                        containerId.includes('status') ? 'status' :
+                        containerId.includes('news') ? 'news' :
+                        containerId.includes('day') ? 'days' : 'times';
+            
+            if (checked) {
+                filterSet[type].add(value);
+            } else {
+                filterSet[type].delete(value);
+            }
+            
+            if (containerId.includes('Analysis')) {
+                updateCharts();
+            } else {
+                displayTrades();
+                updateStats();
+            }
+        }
+
+        function resetFilters() {
+            filters.assets.clear();
+            filters.brokers.clear();
+            filters.strategies.clear();
+            filters.directions.clear();
+            filters.status.clear();
+            filters.news.clear();
+            filters.days.clear();
+            filters.times.clear();
+            initializeFilters();
+            displayTrades();
+            updateStats();
+        }
+
+        function resetAnalysisFilters() {
+            analysisFilters.assets.clear();
+            analysisFilters.brokers.clear();
+            analysisFilters.strategies.clear();
+            analysisFilters.directions.clear();
+            analysisFilters.status.clear();
+            analysisFilters.news.clear();
+            analysisFilters.days.clear();
+            analysisFilters.times.clear();
+            initializeFilters();
+            updateCharts();
+        }
+
+        // Helper pour afficher le label news
+        function getNewsLabel(newsImpact) {
+            if (!newsImpact || newsImpact === 'none') return '';
+            if (newsImpact === 'before') return ' • 📰 Avant news';
+            if (newsImpact === 'after') return ' • 📊 Après news';
+            return '';
+        }
+
+        function displayTrades() {
+            const container = document.getElementById('tradesList');
+            const filteredTrades = getFilteredTrades(filters);
+            
+            if (filteredTrades.length === 0) {
+                container.innerHTML = '<p class="no-data">Aucun trade correspondant aux filtres</p>';
+                return;
+            }
+
+            // Trier par date décroissante (du plus récent au plus ancien)
+            const sortedTrades = filteredTrades.slice().sort(function(a, b) {
+                return new Date(b.date) - new Date(a.date);
+            });
+
+            container.innerHTML = sortedTrades.map(function(trade) {
+                const date = new Date(trade.date);
+                const dateStr = date.toLocaleDateString('fr-FR', { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                // Direction avec icône
+                const directionIcon = trade.direction === 'long' ? '📈' : trade.direction === 'short' ? '📉' : '';
+                const directionText = trade.direction ? (trade.direction === 'long' ? 'Long' : 'Short') : '';
+                
+                // Si le trade est en attente
+                if (trade.status === 'pending') {
+                    // Afficher les TPs cumulés s'il y en a
+                    const hasTPs = trade.amount && trade.amount > 0;
+                    const tpDisplay = hasTPs 
+                        ? '<div style="color: #059669; font-size: 14px; font-weight: 600; margin: 8px 0;">TPs cumulés : ' + 
+                          trade.amount.toFixed(2) + '€' + 
+                          (trade.amountFormula && trade.amountFormula !== trade.amount.toString() ? ' (' + trade.amountFormula + ')' : '') + 
+                          '</div>' 
+                        : '';
+                    
+                    return '<div class="trade-item pending" style="border-left: 4px solid #f59e0b; background: #fffbeb;">' +
+                        '<div class="trade-header">' +
+                        '<span class="trade-date">' + dateStr + '</span>' +
+                        '<span style="background: #f59e0b; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">⏳ EN ATTENTE</span>' +
+                        '</div>' +
+                        '<div style="color: #92400e; font-size: 15px; font-weight: 600; margin: 8px 0;">' +
+                        directionIcon + ' ' + trade.strategy +
+                        '</div>' +
+                        tpDisplay +
+                        '<div class="trade-details">' +
+                        trade.asset + ' • ' + trade.broker + ' • ' + directionText + getNewsLabel(trade.newsImpact) + '<br>' +
+                        'Risque: ' + trade.riskAmount.toFixed(2) + '€ (' + trade.riskPercent.toFixed(2) + '%)' +
+                        (trade.notes ? '<br>📝 ' + trade.notes : '') +
+                        '</div>' +
+                        '<div class="trade-actions">' +
+                        '<button class="btn-resolve" onclick="resolveTrade(' + trade.id + ')">✅ Résoudre</button>' +
+                        '<button class="btn-edit" onclick="editTrade(' + trade.id + ')">✏️ Modifier</button>' +
+                        '<button class="btn-delete-trade" onclick="deleteTrade(' + trade.id + ')">🗑️ Supprimer</button>' +
+                        '</div>' +
+                        '</div>';
+                }
+                
+                // Trade complété (comportement normal)
+                const resultClass = trade.result === 'win' ? 'positive' : 'negative';
+                const sign = trade.result === 'win' ? '+' : '-';
+                const percentSign = trade.percentReturn >= 0 ? '+' : '';
+                
+                // Utiliser capitalAfter si disponible, sinon capital (rétrocompatibilité)
+                const displayCapital = trade.capitalAfter || trade.capital || 0;
+                
+                // R:R seulement pour les wins (ne pas afficher pour les pertes)
+                const rr = trade.riskReward || 0;
+                const rrText = (trade.result === 'win' && rr > 0) ? ' | R:R ' + rr.toFixed(2) : '';
+                
+                // Frais
+                const hasFees = trade.feesAmount !== undefined && trade.feesAmount > 0;
+                const netAmount = trade.netAmount || trade.amount;
+                const feesText = hasFees ? ' (' + (trade.result === 'win' ? '-' : '+') + trade.feesAmount.toFixed(2) + '€ frais)' : '';
+                
+                // Afficher la formule si elle existe et est différente du montant simple
+                const hasFormula = trade.amountFormula && trade.amountFormula !== trade.amount.toString() && /[+\-*/]/.test(trade.amountFormula);
+                const amountDisplay = hasFormula 
+                    ? sign + trade.amount.toFixed(2) + '€ (' + trade.amountFormula + ')' 
+                    : sign + trade.amount.toFixed(2) + '€';
+
+                return '<div class="trade-item ' + trade.result + '">' +
+                    '<div class="trade-header">' +
+                    '<span class="trade-date">' + dateStr + '</span>' +
+                    '<span class="trade-strategy">' + directionIcon + ' ' + trade.strategy + '</span>' +
+                    '</div>' +
+                    '<div class="trade-result ' + resultClass + '">' +
+                    amountDisplay + feesText + ' = ' + sign + netAmount.toFixed(2) + '€ net' +
+                    '</div>' +
+                    '<div class="trade-details">' +
+                    trade.asset + ' • ' + trade.broker + (directionText ? ' • ' + directionText : '') + getNewsLabel(trade.newsImpact) + '<br>' +
+                    'Risque: ' + (trade.riskAmount ? trade.riskAmount.toFixed(2) + '€ (' + trade.riskPercent.toFixed(2) + '%)' : trade.riskPercent.toFixed(2) + '%') + rrText + '<br>' +
+                    'Capital après: ' + displayCapital.toFixed(2) + '€' +
+                    (trade.notes ? '<br>📝 ' + trade.notes : '') +
+                    '</div>' +
+                    '<div class="trade-actions">' +
+                    '<button class="btn-edit" onclick="editTrade(' + trade.id + ')">✏️ Modifier</button>' +
+                    '<button class="btn-delete-trade" onclick="deleteTrade(' + trade.id + ')">🗑️ Supprimer</button>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function updateCharts() {
+            const container = document.getElementById('chartsContainer');
+            const filteredTrades = getFilteredTrades(analysisFilters);
+            
+            // Exclure les trades pending de l'analyse
+            const completedTrades = filteredTrades.filter(function(t) { 
+                return t.status !== 'pending'; 
+            });
+
+            if (completedTrades.length === 0) {
+                container.innerHTML = '<p class="no-data">Aucune donnée à afficher. Ajoutez des trades pour voir les graphiques.</p>';
+                return;
+            }
+
+            Object.keys(charts).forEach(function(key) {
+                charts[key].destroy();
+            });
+            charts = {};
+
+            const chartsHTML = '<div>' +
+                '<div class="chart-title">Courbe d\'Équité</div>' +
+                '<div class="chart-container"><canvas id="equityCurve"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">Drawdown</div>' +
+                '<div class="chart-container"><canvas id="drawdownChart"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">Performance par Actif</div>' +
+                '<div class="chart-container"><canvas id="assetChart"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">Performance par Broker</div>' +
+                '<div class="chart-container"><canvas id="brokerChart"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">Performance par Stratégie</div>' +
+                '<div class="chart-container"><canvas id="strategyChart"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">Performance par Jour de la Semaine</div>' +
+                '<div class="chart-container"><canvas id="dayChart"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">Performance par Plage Horaire</div>' +
+                '<div class="chart-container"><canvas id="timeChart"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">Distribution Gains/Pertes</div>' +
+                '<div class="chart-container"><canvas id="distributionChart"></canvas></div>' +
+                '</div>';
+
+            container.innerHTML = chartsHTML;
+
+            createEquityCurve(completedTrades);
+            createDrawdownChart(completedTrades);
+            createAssetChart(completedTrades);
+            createBrokerChart(completedTrades);
+            createStrategyChart(completedTrades);
+            createDayChart(completedTrades);
+            createTimeChart(completedTrades);
+            createDistributionChart(completedTrades);
+        }
+
+        function createEquityCurve(tradesToChart) {
+            // Trier par date chronologique (du plus ancien au plus récent)
+            const sortedTrades = tradesToChart.slice().sort(function(a, b) {
+                return new Date(a.date) - new Date(b.date);
+            });
+            
+            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            
+            let cumulative = capital;
+            const data = [cumulative];
+            const labels = ['Début'];
+
+            sortedTrades.forEach(function(trade, index) {
+                cumulative += trade.pnl;
+                data.push(cumulative);
+                
+                const tradeDate = new Date(trade.date);
+                const label = tradeDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                labels.push(label);
+            });
+
+            const ctx = document.getElementById('equityCurve').getContext('2d');
+            charts.equity = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Capital',
+                        data: data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(0) + '€'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDrawdownChart(tradesToChart) {
+            // Trier par date chronologique (du plus ancien au plus récent)
+            const sortedTrades = tradesToChart.slice().sort(function(a, b) {
+                return new Date(a.date) - new Date(b.date);
+            });
+            
+            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            
+            let peak = capital;
+            let currentCapital = capital;
+            const data = [0];
+            const labels = ['Début'];
+
+            sortedTrades.forEach(function(trade, index) {
+                currentCapital += trade.pnl;
+                
+                if (currentCapital > peak) {
+                    peak = currentCapital;
+                }
+                
+                const drawdownPercent = ((peak - currentCapital) / peak) * 100;
+                data.push(-drawdownPercent);
+                
+                const tradeDate = new Date(trade.date);
+                const label = tradeDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                labels.push(label);
+            });
+
+            const ctx = document.getElementById('drawdownChart').getContext('2d');
+            charts.drawdown = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Drawdown %',
+                        data: data,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(1) + '%'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAssetChart(tradesToChart) {
+            const assetStats = {};
+            tradesToChart.forEach(function(trade) {
+                if (!assetStats[trade.asset]) {
+                    assetStats[trade.asset] = { pnl: 0 };
+                }
+                assetStats[trade.asset].pnl += trade.pnl;
+            });
+
+            const assetNames = Object.keys(assetStats);
+            const pnls = assetNames.map(function(a) { return assetStats[a].pnl; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+
+            const ctx = document.getElementById('assetChart').getContext('2d');
+            charts.asset = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: assetNames,
+                    datasets: [{
+                        label: 'P&L',
+                        data: pnls,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(0) + '€'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createBrokerChart(tradesToChart) {
+            const brokerStats = {};
+            tradesToChart.forEach(function(trade) {
+                if (!brokerStats[trade.broker]) {
+                    brokerStats[trade.broker] = { pnl: 0 };
+                }
+                brokerStats[trade.broker].pnl += trade.pnl;
+            });
+
+            const brokerNames = Object.keys(brokerStats);
+            const pnls = brokerNames.map(function(b) { return brokerStats[b].pnl; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+
+            const ctx = document.getElementById('brokerChart').getContext('2d');
+            charts.broker = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: brokerNames,
+                    datasets: [{
+                        label: 'P&L',
+                        data: pnls,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(0) + '€'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createStrategyChart(tradesToChart) {
+            const strategyStats = {};
+            tradesToChart.forEach(function(trade) {
+                if (!strategyStats[trade.strategy]) {
+                    strategyStats[trade.strategy] = { pnl: 0 };
+                }
+                strategyStats[trade.strategy].pnl += trade.pnl;
+            });
+
+            const strategies = Object.keys(strategyStats);
+            const pnls = strategies.map(function(s) { return strategyStats[s].pnl; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+
+            const ctx = document.getElementById('strategyChart').getContext('2d');
+            charts.strategy = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: strategies,
+                    datasets: [{
+                        label: 'P&L',
+                        data: pnls,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(0) + '€'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDayChart(tradesToChart) {
+            const dayStats = {};
+            days.forEach(function(day) { dayStats[day] = 0; });
+            
+            tradesToChart.forEach(function(trade) {
+                const day = getTradeDay(trade);
+                dayStats[day] += trade.pnl;
+            });
+
+            const pnls = days.map(function(d) { return dayStats[d]; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+
+            const ctx = document.getElementById('dayChart').getContext('2d');
+            charts.day = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'P&L',
+                        data: pnls,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(0) + '€'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTimeChart(tradesToChart) {
+            const timeStats = {};
+            timeSlots.forEach(function(slot) { timeStats[slot.label] = 0; });
+            
+            tradesToChart.forEach(function(trade) {
+                const timeSlot = getTradeTimeSlot(trade);
+                if (timeStats[timeSlot] !== undefined) {
+                    timeStats[timeSlot] += trade.pnl;
+                }
+            });
+
+            const labels = timeSlots.map(function(s) { return s.label; });
+            const pnls = labels.map(function(l) { return timeStats[l] || 0; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+
+            const ctx = document.getElementById('timeChart').getContext('2d');
+            charts.time = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'P&L',
+                        data: pnls,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(0) + '€'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDistributionChart(tradesToChart) {
+            const wins = tradesToChart.filter(function(t) { return t.result === 'win'; });
+            const losses = tradesToChart.filter(function(t) { return t.result === 'loss'; });
+
+            const avgWin = wins.length > 0 ? wins.reduce(function(sum, t) { return sum + t.amount; }, 0) / wins.length : 0;
+            const avgLoss = losses.length > 0 ? losses.reduce(function(sum, t) { return sum + t.amount; }, 0) / losses.length : 0;
+
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            charts.distribution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Gains Moyens', 'Pertes Moyennes', 'Nombre de Wins', 'Nombre de Losses'],
+                    datasets: [{
+                        label: 'Valeur',
+                        data: [avgWin, avgLoss, wins.length, losses.length],
+                        backgroundColor: ['#10b981', '#ef4444', '#10b981', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function exportCSV() {
+            if (trades.length === 0) {
+                alert('Aucun trade à exporter');
+                return;
+            }
+
+            const headers = ['Date', 'Heure', 'Actif', 'Broker', 'Direction', 'News', 'Jour', 'Plage Horaire', 'Stratégie', 'Statut', 'Résultat', 'Risque €', 'Risque %', 'Montant Brut', 'Formule', 'Frais %', 'Frais €', 'Montant Net', 'P&L', '% Return', 'R:R', 'Capital Après', 'Notes'];
+            const rows = trades.map(function(t) {
+                const date = new Date(t.date);
+                const direction = t.direction === 'long' ? 'Long' : t.direction === 'short' ? 'Short' : 'Long';
+                const status = t.status === 'pending' ? 'En attente' : 'Complété';
+                const newsImpact = t.newsImpact === 'before' ? 'Avant news' : 
+                                   t.newsImpact === 'after' ? 'Après news' : 'Pas de news';
+                const rr = (t.result === 'win' && t.riskReward) ? t.riskReward : 0;
+                const feesPercent = t.feesPercent || 0;
+                const feesAmount = t.feesAmount || 0;
+                const netAmount = t.netAmount || t.amount || 0;
+                
+                // Pour les trades pending, laisser vide les champs de résultat
+                const result = t.status === 'pending' ? '' : (t.result === 'win' ? 'Gagnant' : 'Perdant');
+                const amount = t.status === 'pending' ? (t.amount > 0 ? t.amount.toFixed(2) : '') : t.amount.toFixed(2);
+                const formula = t.amountFormula || '';
+                const fees = t.status === 'pending' ? '' : feesAmount.toFixed(2);
+                const net = t.status === 'pending' ? '' : netAmount.toFixed(2);
+                const pnl = t.status === 'pending' ? '' : t.pnl.toFixed(2);
+                const percentReturn = t.status === 'pending' ? '' : t.percentReturn.toFixed(2);
+                const rrText = t.status === 'pending' ? '' : (rr > 0 ? rr.toFixed(2) : '');
+                const capital = t.status === 'pending' ? '' : (t.capitalAfter || t.capital || 0).toFixed(2);
+                
+                return [
+                    date.toLocaleDateString('fr-FR'),
+                    date.toLocaleTimeString('fr-FR'),
+                    t.asset,
+                    t.broker,
+                    direction,
+                    newsImpact,
+                    getTradeDay(t),
+                    getTradeTimeSlot(t),
+                    t.strategy,
+                    status,
+                    result,
+                    t.riskAmount ? t.riskAmount.toFixed(2) : '',
+                    t.riskPercent ? t.riskPercent.toFixed(2) : '',
+                    amount,
+                    formula,
+                    feesPercent.toFixed(2),
+                    fees,
+                    net,
+                    pnl,
+                    percentReturn,
+                    rrText,
+                    capital,
+                    t.notes || ''
+                ];
+            });
+
+            // Fonction pour échapper les champs CSV (guillemets doubles)
+            function escapeCSVField(field) {
+                const str = String(field);
+                // Si le champ contient des guillemets, point-virgule, retours à la ligne ou virgules, on l'entoure de guillemets
+                if (str.includes('"') || str.includes(';') || str.includes('\n') || str.includes(',')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            }
+
+            // Créer le CSV avec point-virgule (compatible Excel français)
+            const csvContent = [headers].concat(rows).map(function(row) { 
+                return row.map(escapeCSVField).join(';'); 
+            }).join('\n');
+
+            // Ajouter le BOM UTF-8 pour qu'Excel détecte bien l'encodage
+            const BOM = '\uFEFF';
+            const csv = BOM + csvContent;
+
+            downloadFile(csv, 'trading-journal-' + new Date().toISOString().slice(0, 10) + '.csv', 'text/csv;charset=utf-8');
+        }
+
+        function exportJSON() {
+            if (trades.length === 0) {
+                alert('Aucun trade à exporter');
+                return;
+            }
+
+            const exportData = {
+                trades: trades,
+                config: {
+                    assets: assets,
+                    brokers: brokers,
+                    strategies: strategies,
+                    timeSlots: timeSlots,
+                    initialCapital: document.getElementById('initialCapital').value
+                },
+                exportDate: new Date().toISOString()
+            };
+
+            const json = JSON.stringify(exportData, null, 2);
+            downloadFile(json, 'trading-journal-backup-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json');
+            showBackupMessage('✅ Backup créé avec succès', 'success');
+        }
+
+        function importJSON() {
+            document.getElementById('importFile').click();
+        }
+
+        async function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importData = JSON.parse(e.target.result);
+
+                    if (!confirm('Importer ces données ? Cela écrasera vos données actuelles.')) {
+                        return;
+                    }
+
+                    // Importer les trades
+                    if (importData.trades) {
+                        trades = importData.trades;
+                        // Recalculer les capitaux après import
+                        await recalculateCapitals();
+                    }
+
+                    // Importer la config
+                    if (importData.config) {
+                        if (importData.config.assets) {
+                            assets = importData.config.assets;
+                            await saveAssets();
+                        }
+                        if (importData.config.brokers) {
+                            brokers = importData.config.brokers;
+                            await saveBrokers();
+                        }
+                        if (importData.config.strategies) {
+                            strategies = importData.config.strategies;
+                            await saveStrategies();
+                        }
+                        if (importData.config.timeSlots) {
+                            timeSlots = importData.config.timeSlots;
+                            await saveTimeSlots();
+                        }
+                        if (importData.config.initialCapital) {
+                            document.getElementById('initialCapital').value = importData.config.initialCapital;
+                            await saveConfigDB('initialCapital', importData.config.initialCapital);
+                        }
+                    }
+
+                    // Rafraîchir l'interface
+                    updateAssetDropdown();
+                    updateBrokerDropdown();
+                    updateStrategyDropdown();
+                    displayAssets();
+                    displayBrokers();
+                    displayStrategies();
+                    displayTimeSlots();
+                    updateStats();
+                    displayTrades();
+                    initializeFilters();
+
+                    showBackupMessage('✅ Import réussi !', 'success');
+                    alert('Import réussi ! ' + trades.length + ' trades restaurés.');
+
+                } catch (error) {
+                    alert('Erreur lors de l\'import : fichier invalide');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function createManualBackup() {
+            exportJSON();
+        }
+
+        function showBackupInfo() {
+            alert('💾 Info Sauvegarde\n\n' +
+                  '✅ Vos données sont stockées dans IndexedDB\n' +
+                  '✅ Chrome ne peut PAS les supprimer automatiquement\n' +
+                  '✅ Backup automatique toutes les 30 minutes\n' +
+                  '✅ 10 derniers backups conservés\n\n' +
+                  'Pour une sécurité maximale :\n' +
+                  '→ Exportez régulièrement en JSON\n' +
+                  '→ Sauvegardez le fichier sur Google Drive');
+        }
+
+        function calculateStorageSize() {
+            const tradesCount = trades.length;
+            const dataStr = JSON.stringify({
+                trades: trades,
+                config: { assets, brokers, strategies, timeSlots }
+            });
+            const sizeKB = (new Blob([dataStr]).size / 1024).toFixed(2);
+            
+            document.getElementById('tradesCount').textContent = tradesCount;
+            document.getElementById('storageSize').textContent = sizeKB + ' KB';
+            
+            // Alerte si > 1MB
+            if (sizeKB > 1024) {
+                const sizeMB = (sizeKB / 1024).toFixed(2);
+                document.getElementById('storageSize').textContent = sizeMB + ' MB ⚠️';
+                document.getElementById('storageSize').parentElement.parentElement.style.background = '#fee2e2';
+                document.getElementById('storageSize').parentElement.parentElement.style.borderLeftColor = '#ef4444';
+            }
+        }
+
+        async function archiveOldTrades() {
+            if (trades.length === 0) {
+                alert('Aucun trade à archiver');
+                return;
+            }
+
+            const months = prompt('Archiver les trades de plus de combien de mois ?\n(ex: 6 pour archiver trades > 6 mois)', '6');
+            if (!months || isNaN(months)) return;
+
+            const cutoffDate = new Date();
+            cutoffDate.setMonth(cutoffDate.getMonth() - parseInt(months));
+
+            const oldTrades = trades.filter(function(t) {
+                return new Date(t.date) < cutoffDate;
+            });
+
+            if (oldTrades.length === 0) {
+                alert('Aucun trade de plus de ' + months + ' mois trouvé');
+                return;
+            }
+
+            if (!confirm('Archiver ' + oldTrades.length + ' trades (plus de ' + months + ' mois) ?\n\nUn fichier JSON sera téléchargé, puis ces trades seront supprimés.')) {
+                return;
+            }
+
+            // Export des vieux trades
+            const archiveData = {
+                trades: oldTrades,
+                archiveDate: new Date().toISOString(),
+                note: 'Archive des trades de plus de ' + months + ' mois'
+            };
+
+            const json = JSON.stringify(archiveData, null, 2);
+            downloadFile(json, 'archive-trades-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json');
+
+            // Attendre 1 seconde pour le téléchargement
+            setTimeout(async function() {
+                // Garder seulement les trades récents
+                trades = trades.filter(function(t) {
+                    return new Date(t.date) >= cutoffDate;
+                });
+
+                // Recalculer les capitaux après archivage
+                await recalculateCapitals();
+                
+                updateStats();
+                displayTrades();
+                initializeFilters();
+                calculateStorageSize();
+
+                showBackupMessage('✅ ' + oldTrades.length + ' trades archivés', 'success');
+                alert('Archivage terminé !\n\n' + oldTrades.length + ' trades archivés\n' + trades.length + ' trades conservés\n\nFichier téléchargé : archive-trades-*.json');
+            }, 1000);
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type: type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function clearData() {
+            if (confirm('Êtes-vous sûr de vouloir effacer toutes les données ?')) {
+                if (confirm('ATTENTION ! Cette action est irréversible. Voulez-vous d\'abord créer un backup ?')) {
+                    exportJSON();
+                    
+                    setTimeout(async function() {
+                        if (confirm('Backup créé. Confirmer la suppression ?')) {
+                            trades = [];
+                            await saveTrades();
+                            updateStats();
+                            displayTrades();
+                            initializeFilters();
+                            calculateStorageSize();
+                            showBackupMessage('⚠️ Données effacées', 'warning');
+                        }
+                    }, 1000);
+                } else {
+                    trades = [];
+                    await saveTrades();
+                    updateStats();
+                    displayTrades();
+                    initializeFilters();
+                    calculateStorageSize();
+                    showBackupMessage('⚠️ Données effacées', 'warning');
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(function(content) {
+                content.classList.remove('active');
+            });
+            
+            const tabs = ['entry', 'history', 'analysis', 'settings'];
+            const index = tabs.indexOf(tab);
+            
+            document.querySelectorAll('.tab-btn')[index].classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+            
+            if (tab === 'history') {
+                displayTrades();
+            } else if (tab === 'analysis') {
+                updateCharts();
+            } else if (tab === 'settings') {
+                calculateStorageSize();
+            }
+        }
+
+        // Lancer l'application
+        init();
+
+        document.getElementById('initialCapital').addEventListener('input', async function() {
+            await saveConfigDB('initialCapital', this.value);
+            
+            // Recalculer tous les capitaux si le capital initial change
+            if (trades.length > 0) {
+                await recalculateCapitals();
+            }
+            
+            updateStats();
+            if (document.getElementById('analysisTab').classList.contains('active')) {
+                updateCharts();
+            }
+            if (document.getElementById('settingsTab').classList.contains('active')) {
+                calculateStorageSize();
+            }
+        });
+
+        document.getElementById('defaultFees').addEventListener('input', async function() {
+            await saveConfigDB('defaultFees', this.value);
+            
+            // Mettre à jour le champ frais dans le formulaire si on n'est pas en mode édition
+            if (editingTradeId === null) {
+                document.getElementById('feesPercent').value = this.value;
+                updateFeesAmount();
+            }
+        });
+
+        document.getElementById('defaultRisk').addEventListener('input', async function() {
+            await saveConfigDB('defaultRisk', this.value);
+            
+            // Mettre à jour le champ risque dans le formulaire si on n'est pas en mode édition
+            if (editingTradeId === null) {
+                document.getElementById('riskAmount').value = this.value;
+                updateRiskPercent();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{
+  "name": "Journal de Trading Pro",
+  "short_name": "Trading Journal",
+  "description": "Journal de trading professionnel avec gestion des trades, analyses et statistiques",
+  "start_url": "./trading-journal-indexeddb.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity", "business"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nouveau Trade",
+      "short_name": "Nouveau",
+      "description": "Enregistrer un nouveau trade",
+      "url": "./trading-journal-indexeddb.html#entry",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Historique",
+      "short_name": "Historique",
+      "description": "Voir l'historique des trades",
+      "url": "./trading-journal-indexeddb.html#history",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

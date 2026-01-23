@@ -1,0 +1,67 @@
+const CACHE_NAME = 'trading-journal-v1.8.2';
+const urlsToCache = [
+  './trading-journal-indexeddb.html',
+  './manifest.json'
+];
+
+// Installation du service worker
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Cache ouvert');
+        return cache.addAll(urlsToCache);
+      })
+  );
+});
+
+// Activation et nettoyage des anciens caches
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Suppression ancien cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
+// Interception des requêtes
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        // Retourner depuis le cache si disponible
+        if (response) {
+          return response;
+        }
+        
+        // Sinon, faire la requête réseau
+        return fetch(event.request).then(response => {
+          // Vérifier si la réponse est valide
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+
+          // Cloner la réponse car elle ne peut être utilisée qu'une fois
+          const responseToCache = response.clone();
+
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+
+          return response;
+        });
+      })
+      .catch(() => {
+        // En cas d'erreur réseau, retourner le HTML du cache
+        return caches.match('./trading-journal-indexeddb.html');
+      })
+  );
+});
