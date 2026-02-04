@@ -1,6 +1,7 @@
 {
   "name": "Journal de Trading Pro",
   "short_name": "Trading Journal",
+  "version": "1.9.0",
   "description": "Journal de trading professionnel avec gestion des trades, analyses et statistiques",
   "start_url": "./trading-journal-indexeddb.html",
   "display": "standalone",
