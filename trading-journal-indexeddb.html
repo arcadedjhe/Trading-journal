@@ -972,6 +972,42 @@
             </div>
 
             <!-- VERSION INFO -->
+            <!-- MIGRATION SECTION -->
+            <div class="card">
+                <h2 class="section-title">🔄 Migration des Données</h2>
+                
+                <div class="info-box" style="background: #fef3c7; border-left-color: #f59e0b; color: #92400e;">
+                    <strong style="display: block; margin-bottom: 8px;">⚠️ Pour les utilisateurs de v1.8.7, v1.8.8 ou v1.8.9</strong>
+                    <p style="margin: 0 0 10px 0; line-height: 1.5;">
+                        Si vous avez créé des trades avec les versions 1.8.7 à 1.8.9, certaines valeurs peuvent être incorrectes (netAmount, pnl). Cette migration va <strong>automatiquement recalculer</strong> tous vos trades avec la logique correcte.
+                    </p>
+                    <p style="margin: 0; line-height: 1.5; font-weight: 600;">
+                        ✅ Sûr : Vos données sont sauvegardées avant la migration<br>
+                        ✅ Rapide : Quelques secondes seulement<br>
+                        ✅ Automatique : Aucune saisie manuelle requise
+                    </p>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #10b981;">
+                    <strong style="color: #065f46; display: block; margin-bottom: 8px;">📋 Ce qui sera corrigé :</strong>
+                    <ul style="font-size: 13px; color: #065f46; margin: 0; padding-left: 20px; line-height: 1.6;">
+                        <li>Recalcul des montants nets (netAmount) avec la bonne logique</li>
+                        <li>Correction des P&L (pnl) signés correctement</li>
+                        <li>Détection automatique des formules vs montants simples</li>
+                        <li>Mise à jour du champ hasFormula pour chaque trade</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-warning" onclick="showMigrationConfirm()" style="width: 100%; padding: 15px; font-size: 16px; font-weight: 600;">
+                        🔄 Migrer mes trades maintenant
+                    </button>
+                </div>
+
+                <div id="migrationStatus" style="margin-top: 15px; display: none;"></div>
+            </div>
+
+            <!-- INFORMATION SECTION -->
             <div class="card">
                 <h2 class="section-title">ℹ️ Informations</h2>
                 
@@ -985,28 +1021,23 @@
                         <span id="versionDate" style="color: #6b7280;">2025-01-23</span>
                     </div>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 1.8.2</strong>
+                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 1.9.0</strong>
                         <ul style="font-size: 13px; color: #6b7280; margin: 0; padding-left: 20px; line-height: 1.6;">
-                            <li>🎨 <strong>Amélioration espacement News</strong> : Gap augmenté (25px) + white-space pour texte sur une ligne</li>
-                            <li>🎨 <strong>Correction mise en page Config</strong> : Ajout word-wrap et line-height aux info-box</li>
+                            <li>🔄 <strong>Migration automatique intégrée</strong> : Bouton dans les paramètres pour corriger les anciens trades</li>
+                            <li>✅ <strong>Plus besoin de ressaisie manuelle</strong> : La migration recalcule automatiquement tous vos trades</li>
+                            <li>🎯 <strong>Idéal pour mobile</strong> : Fonctionne directement sur téléphone, sans console JavaScript</li>
+                            <li>📊 <strong>Toutes les stats OK</strong> : Profit Factor, RR moyen, Drawdown, Frais totaux</li>
                         </ul>
                         <details style="margin-top: 10px;">
                             <summary style="cursor: pointer; color: #667eea; font-weight: 600;">Versions précédentes</summary>
                             <div style="margin-top: 8px; padding-left: 10px; border-left: 2px solid #e5e7eb;">
-                                <strong style="font-size: 12px; color: #6b7280;">v1.8.1 - Corrections bugs</strong>
+                                <strong style="font-size: 12px; color: #6b7280;">v1.8.10 - Tout fonctionne</strong>
                                 <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
-                                    <li>Réinitialisation champ News</li>
-                                    <li>Filtres News fonctionnels</li>
+                                    <li>Double logique finalisée, await ajouté</li>
                                 </ul>
-                                <strong style="font-size: 12px; color: #6b7280;">v1.8.0 - Impact des News</strong>
+                                <strong style="font-size: 12px; color: #6b7280;">v1.8.7-8.9 - Corrections progressives</strong>
                                 <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
-                                    <li>Champ News (3 options)</li>
-                                    <li>Filtres repliables</li>
-                                    <li>Mode compact (4-5 trades)</li>
-                                </ul>
-                                <strong style="font-size: 12px; color: #6b7280;">v1.7.0 - Calcul intelligent</strong>
-                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
-                                    <li>Formules mathématiques</li>
+                                    <li>Double logique formule vs montant</li>
                                 </ul>
                             </div>
                         </details>
@@ -1018,8 +1049,8 @@
 
     <script>
         // ========== VERSION ==========
-        const APP_VERSION = '1.8.2';
-        const VERSION_DATE = '2025-01-23';
+        const APP_VERSION = '1.9.0';
+        const VERSION_DATE = '2026-02-03';
         
         // ========== PWA Service Worker ==========
         if ('serviceWorker' in navigator) {
@@ -1150,6 +1181,28 @@
                 request.onerror = function() {
                     reject('Erreur lors du chargement de la config');
                 };
+            });
+        }
+
+        // Fonction pour récupérer le capital (TOUJOURS depuis IndexedDB)
+        async function getCapital() {
+            const saved = await loadConfigDB('initialCapital');
+            return parseFloat(saved) || 5000; // 5000 par défaut
+        }
+
+        // Fonction de tri chronologique stable (date puis timestamp)
+        function sortTradesByDate(trades, reverse = false) {
+            return trades.slice().sort(function(a, b) {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                
+                // D'abord par date
+                if (dateA.getTime() !== dateB.getTime()) {
+                    return reverse ? (dateB - dateA) : (dateA - dateB);
+                }
+                
+                // Si même date → par timestamp de création (ordre stable)
+                return reverse ? (b.timestamp - a.timestamp) : (a.timestamp - b.timestamp);
             });
         }
 
@@ -1743,9 +1796,9 @@
 
         let editingTradeId = null;
 
-        function updateRiskPercent() {
+        async function updateRiskPercent() {
             const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
-            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            const capital = await getCapital();
             
             if (capital > 0 && riskAmount > 0) {
                 const riskPercent = (riskAmount / capital) * 100;
@@ -1794,8 +1847,11 @@
                 return 0;
             }
             
+            // Support virgule française : remplacer , par .
+            const normalized = expression.replace(/,/g, '.');
+            
             // Nettoyer l'expression : n'autoriser que chiffres, +, -, *, /, ., (, ), espaces
-            const cleaned = expression.replace(/[^0-9+\-*/().\s]/g, '');
+            const cleaned = normalized.replace(/[^0-9+\-*/().\s]/g, '');
             
             if (!cleaned) {
                 return 0;
@@ -1837,7 +1893,9 @@
 
         function updateRiskReward() {
             const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
-            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const amountInput = document.getElementById('amount').value.trim();
+            // Pour R:R, toujours utiliser abs() car on mesure la taille
+            const amount = Math.abs(safeCalculate(amountInput));
             
             if (riskAmount > 0 && amount > 0) {
                 const rr = amount / riskAmount;
@@ -1866,18 +1924,36 @@
         }
 
         function updateNetAmount() {
-            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const amountInput = document.getElementById('amount').value.trim();
+            const hasFormula = /[+\-*/]/.test(amountInput);
+            
+            // Calculer amount selon le type
+            let amount;
+            if (hasFormula) {
+                amount = safeCalculate(amountInput); // Garder le signe
+            } else {
+                amount = Math.abs(safeCalculate(amountInput)); // Toujours positif
+            }
+            
             const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
             const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
             
-            if (amount > 0 && riskAmount > 0 && feesPercent > 0 && currentResult) {
+            if (amount !== 0 && riskAmount > 0 && feesPercent > 0 && currentResult) {
                 const feesAmount = riskAmount * (feesPercent / 100);
                 let netAmount;
                 
-                if (currentResult === 'win') {
-                    netAmount = amount - feesAmount;  // Gain - frais
+                if (hasFormula) {
+                    // Formule : calculer avec le signe
+                    netAmount = amount - feesAmount;
+                    // Afficher en valeur absolue
+                    netAmount = Math.abs(netAmount);
                 } else {
-                    netAmount = amount + feesAmount;  // Perte + frais
+                    // Montant simple : logique actuelle
+                    if (currentResult === 'win') {
+                        netAmount = amount - feesAmount;  // Gain - frais
+                    } else {
+                        netAmount = amount + feesAmount;  // Perte + frais
+                    }
                 }
                 
                 document.getElementById('netAmountValue').textContent = netAmount.toFixed(2) + '€';
@@ -1953,10 +2029,21 @@
             const amountInput = document.getElementById('amount').value.trim();
             const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
             const notes = document.getElementById('notes').value;
-            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            const capital = await getCapital();
 
-            // Calculer le montant à partir de la formule
-            const amount = safeCalculate(amountInput);
+            // Détection formule vs montant simple
+            const hasFormula = /[+\-*/]/.test(amountInput);
+            
+            // Calculer le montant selon le type
+            let amount;
+            if (hasFormula) {
+                // FORMULE : garder le signe (peut être négatif)
+                amount = safeCalculate(amountInput);
+            } else {
+                // MONTANT SIMPLE : toujours positif
+                amount = Math.abs(safeCalculate(amountInput));
+            }
+            
             const amountFormula = amountInput; // Stocker la formule originale
 
             // Validation selon le status
@@ -1986,14 +2073,35 @@
                 // Calcul des frais
                 feesAmount = riskAmount * (feesPercent / 100);
                 
-                // Calcul du montant net selon win/loss
-                if (currentResult === 'win') {
-                    netAmount = amount - feesAmount;  // Gain - frais
-                } else {
-                    netAmount = amount + feesAmount;  // Perte + frais (on perd plus !)
-                }
+                // Détection formule vs montant simple
+                const hasFormula = /[+\-*/]/.test(amountInput);
                 
-                pnl = currentResult === 'win' ? netAmount : -netAmount;
+                if (hasFormula) {
+                    // === FORMULE DÉTECTÉE ===
+                    // amount peut être négatif (ex: "-40+2" = -38)
+                    
+                    // Calculer le net (toujours soustraire les frais)
+                    netAmount = amount - feesAmount;
+                    // Ex: -38 - 2.40 = -40.40 ✅
+                    // Ex: 1 - 2.40 = -1.40 ✅
+                    
+                    // Le pnl = netAmount pour les formules
+                    pnl = netAmount;
+                    
+                    // Stocker amount en valeur absolue pour l'affichage
+                    // MAIS garder netAmount signé pour les calculs !
+                    amount = Math.abs(amount);
+                    
+                } else {
+                    // === MONTANT SIMPLE ===
+                    // Logique actuelle : représente la taille du mouvement
+                    if (currentResult === 'win') {
+                        netAmount = amount - feesAmount;  // Gain - frais
+                    } else {
+                        netAmount = amount + feesAmount;  // Perte + frais
+                    }
+                    pnl = currentResult === 'win' ? netAmount : -netAmount;
+                }
                 
                 // R:R seulement pour les wins
                 riskReward = currentResult === 'win' ? (amount / riskAmount) : 0;
@@ -2023,6 +2131,7 @@
                         riskReward: riskReward,
                         amount: amount, // Montant calculé (peut être non nul en pending)
                         amountFormula: amountFormula, // Formule originale
+                        hasFormula: /[+\-*/]/.test(amountInput), // Détection formule
                         feesPercent: feesPercent,
                         feesAmount: feesAmount,
                         netAmount: netAmount,
@@ -2064,6 +2173,7 @@
                     riskReward: riskReward,
                     amount: amount, // Montant calculé (peut être non nul en pending)
                     amountFormula: amountFormula, // Formule originale
+                    hasFormula: /[+\-*/]/.test(amountInput), // Détection formule
                     feesPercent: feesPercent,
                     feesAmount: feesAmount,
                     netAmount: netAmount,
@@ -2118,7 +2228,7 @@
             switchTab('history');
         }
 
-        function editTrade(tradeId) {
+        async function editTrade(tradeId) {
             const trade = trades.find(function(t) { return t.id === tradeId; });
             
             if (!trade) {
@@ -2153,7 +2263,9 @@
             const newsValue = trade.newsImpact || 'none';
             document.querySelector('input[name="newsImpact"][value="' + newsValue + '"]').checked = true;
             
-            document.getElementById('riskAmount').value = trade.riskAmount || (trade.riskPercent ? (trade.riskPercent / 100 * 10000).toFixed(2) : '');
+            // Récupérer le capital configuré pour recalculer riskAmount si nécessaire
+            const capital = await getCapital();
+            document.getElementById('riskAmount').value = trade.riskAmount || (trade.riskPercent ? (trade.riskPercent / 100 * capital).toFixed(2) : '');
             document.getElementById('feesPercent').value = trade.feesPercent || 0;
             document.getElementById('notes').value = trade.notes || '';
 
@@ -2325,12 +2437,10 @@
         async function recalculateCapitals() {
             if (trades.length === 0) return;
 
-            const initialCapital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            const initialCapital = await getCapital();
             
-            // Trier les trades par date (du plus ancien au plus récent)
-            const sortedTrades = trades.slice().sort(function(a, b) {
-                return new Date(a.date) - new Date(b.date);
-            });
+            // Trier les trades par date (du plus ancien au plus récent) avec timestamp comme critère secondaire
+            const sortedTrades = sortTradesByDate(trades);
 
             let currentCapital = initialCapital;
 
@@ -2351,15 +2461,13 @@
             await saveTrades();
         }
 
-        function calculateDrawdown(trades) {
+        async function calculateDrawdown(trades) {
             if (trades.length === 0) return { maxDD: 0, maxDDPercent: 0 };
 
-            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            const capital = await getCapital();
             
-            // Trier par date pour calculer le drawdown correctement
-            const sortedTrades = trades.slice().sort(function(a, b) {
-                return new Date(a.date) - new Date(b.date);
-            });
+            // Trier par date (timestamp comme critère secondaire) pour calculer le drawdown correctement
+            const sortedTrades = sortTradesByDate(trades);
             
             let peak = capital;
             let maxDD = 0;
@@ -2385,8 +2493,8 @@
             return { maxDD: maxDD, maxDDPercent: maxDDPercent };
         }
 
-        function updateStats() {
-            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+        async function updateStats() {
+            const capital = await getCapital();
             const filteredTrades = getFilteredTrades(filters);
             
             // Exclure les trades pending des statistiques
@@ -2406,11 +2514,11 @@
             const totalPnL = completedTrades.reduce(function(sum, t) { return sum + t.pnl; }, 0);
             const performance = ((totalPnL / capital) * 100).toFixed(2);
 
-            const totalWins = completedTrades.filter(function(t) { return t.result === 'win'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
-            const totalLosses = completedTrades.filter(function(t) { return t.result === 'loss'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
+            const totalWins = completedTrades.filter(function(t) { return t.result === 'win'; }).reduce(function(sum, t) { return sum + (t.netAmount || t.amount); }, 0);
+            const totalLosses = completedTrades.filter(function(t) { return t.result === 'loss'; }).reduce(function(sum, t) { return sum + Math.abs(t.netAmount || t.amount); }, 0);
             const profitFactor = totalLosses > 0 ? (totalWins / totalLosses).toFixed(2) : totalWins > 0 ? '∞' : '0';
 
-            const drawdownResult = calculateDrawdown(completedTrades);
+            const drawdownResult = await calculateDrawdown(completedTrades);
             const maxDDPercent = drawdownResult.maxDDPercent;
 
             // Calcul des frais totaux
@@ -2688,10 +2796,8 @@
                 return;
             }
 
-            // Trier par date décroissante (du plus récent au plus ancien)
-            const sortedTrades = filteredTrades.slice().sort(function(a, b) {
-                return new Date(b.date) - new Date(a.date);
-            });
+            // Trier par date décroissante (du plus récent au plus ancien) avec timestamp
+            const sortedTrades = sortTradesByDate(filteredTrades, true);
 
             container.innerHTML = sortedTrades.map(function(trade) {
                 const date = new Date(trade.date);
@@ -2754,8 +2860,20 @@
                 
                 // Frais
                 const hasFees = trade.feesAmount !== undefined && trade.feesAmount > 0;
-                const netAmount = trade.netAmount || trade.amount;
-                const feesText = hasFees ? ' (' + (trade.result === 'win' ? '-' : '+') + trade.feesAmount.toFixed(2) + '€ frais)' : '';
+                // Utiliser abs() pour l'affichage (netAmount peut être négatif pour les formules)
+                const netAmount = Math.abs(trade.netAmount || trade.amount);
+                
+                // Affichage des frais adapté selon le type (formule vs montant simple)
+                let feesText = '';
+                if (hasFees) {
+                    if (trade.hasFormula) {
+                        // Formule : toujours soustraire les frais
+                        feesText = ' (-' + trade.feesAmount.toFixed(2) + '€ frais)';
+                    } else {
+                        // Montant simple : logique actuelle
+                        feesText = ' (' + (trade.result === 'win' ? '-' : '+') + trade.feesAmount.toFixed(2) + '€ frais)';
+                    }
+                }
                 
                 // Afficher la formule si elle existe et est différente du montant simple
                 const hasFormula = trade.amountFormula && trade.amountFormula !== trade.amount.toString() && /[+\-*/]/.test(trade.amountFormula);
@@ -2785,7 +2903,7 @@
             }).join('');
         }
 
-        function updateCharts() {
+        async function updateCharts() {
             const container = document.getElementById('chartsContainer');
             const filteredTrades = getFilteredTrades(analysisFilters);
             
@@ -2839,8 +2957,8 @@
 
             container.innerHTML = chartsHTML;
 
-            createEquityCurve(completedTrades);
-            createDrawdownChart(completedTrades);
+            await createEquityCurve(completedTrades);
+            await createDrawdownChart(completedTrades);
             createAssetChart(completedTrades);
             createBrokerChart(completedTrades);
             createStrategyChart(completedTrades);
@@ -2849,13 +2967,11 @@
             createDistributionChart(completedTrades);
         }
 
-        function createEquityCurve(tradesToChart) {
-            // Trier par date chronologique (du plus ancien au plus récent)
-            const sortedTrades = tradesToChart.slice().sort(function(a, b) {
-                return new Date(a.date) - new Date(b.date);
-            });
+        async function createEquityCurve(tradesToChart) {
+            // Trier par date chronologique (du plus ancien au plus récent) avec timestamp
+            const sortedTrades = sortTradesByDate(tradesToChart);
             
-            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            const capital = await getCapital();
             
             let cumulative = capital;
             const data = [cumulative];
@@ -2901,13 +3017,11 @@
             });
         }
 
-        function createDrawdownChart(tradesToChart) {
-            // Trier par date chronologique (du plus ancien au plus récent)
-            const sortedTrades = tradesToChart.slice().sort(function(a, b) {
-                return new Date(a.date) - new Date(b.date);
-            });
+        async function createDrawdownChart(tradesToChart) {
+            // Trier par date chronologique (du plus ancien au plus récent) avec timestamp
+            const sortedTrades = sortTradesByDate(tradesToChart);
             
-            const capital = parseFloat(document.getElementById('initialCapital').value) || 10000;
+            const capital = await getCapital();
             
             let peak = capital;
             let currentCapital = capital;
@@ -3556,6 +3670,130 @@
                 updateRiskPercent();
             }
         });
+
+        // ========== MIGRATION FUNCTIONS ==========
+        
+        function showMigrationConfirm() {
+            if (confirm('🔄 Migration des données\n\n' +
+                'Cette opération va recalculer tous vos trades avec la logique correcte de la v1.8.10.\n\n' +
+                'Vos données actuelles seront préservées (backup automatique).\n\n' +
+                'Nombre de trades à migrer : ' + trades.length + '\n\n' +
+                'Continuer ?')) {
+                migrateTrades();
+            }
+        }
+
+        async function migrateTrades() {
+            const statusDiv = document.getElementById('migrationStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<div style="padding: 15px; background: #dbeafe; border-left: 4px solid #3b82f6; color: #1e40af; border-radius: 4px;">' +
+                '⏳ Migration en cours...' +
+                '</div>';
+            
+            try {
+                console.log('🔄 Début de la migration...');
+                console.log(`📊 ${trades.length} trades à migrer`);
+                
+                let migratedCount = 0;
+                let skippedCount = 0;
+                
+                // Recalculer chaque trade
+                for (let i = 0; i < trades.length; i++) {
+                    const trade = trades[i];
+                    
+                    if (trade.status !== 'completed') {
+                        console.log(`⏭️  Trade ${trade.id} en attente, ignoré`);
+                        skippedCount++;
+                        continue;
+                    }
+                    
+                    console.log(`🔧 Correction trade ${trade.id}...`);
+                    
+                    const amountInput = trade.amountFormula || trade.amount.toString();
+                    const hasFormula = /[+\-*/]/.test(amountInput);
+                    
+                    // Recalculer amount
+                    let amount;
+                    if (hasFormula) {
+                        // Formule : évaluer avec le signe
+                        amount = safeCalculate(amountInput);
+                    } else {
+                        // Montant simple : toujours positif
+                        amount = Math.abs(safeCalculate(amountInput));
+                    }
+                    
+                    const riskAmount = trade.riskAmount;
+                    const feesPercent = trade.feesPercent || 0;
+                    const feesAmount = riskAmount * (feesPercent / 100);
+                    
+                    let netAmount, pnl;
+                    
+                    if (hasFormula) {
+                        // === FORMULE ===
+                        netAmount = amount - feesAmount;
+                        pnl = netAmount;
+                        amount = Math.abs(amount); // Pour l'affichage
+                        // netAmount reste signé !
+                    } else {
+                        // === MONTANT SIMPLE ===
+                        if (trade.result === 'win') {
+                            netAmount = amount - feesAmount;
+                        } else {
+                            netAmount = amount + feesAmount;
+                        }
+                        pnl = trade.result === 'win' ? netAmount : -netAmount;
+                    }
+                    
+                    // Mettre à jour le trade
+                    trades[i] = {
+                        ...trade,
+                        amount: amount,
+                        amountFormula: amountInput,
+                        hasFormula: hasFormula,
+                        feesAmount: feesAmount,
+                        netAmount: netAmount,
+                        pnl: pnl
+                    };
+                    
+                    console.log(`✅ Trade ${trade.id} corrigé :`, {
+                        amount: amount,
+                        netAmount: netAmount,
+                        pnl: pnl,
+                        hasFormula: hasFormula
+                    });
+                    
+                    migratedCount++;
+                }
+                
+                // Recalculer les capitaux
+                await recalculateCapitals();
+                
+                // Sauvegarder
+                await saveTrades();
+                
+                // Rafraîchir l'affichage
+                updateStats();
+                displayTrades();
+                
+                console.log('✅ Migration terminée !');
+                console.log(`📊 ${migratedCount} trades migrés, ${skippedCount} ignorés`);
+                
+                statusDiv.innerHTML = '<div style="padding: 15px; background: #d1fae5; border-left: 4px solid #10b981; color: #065f46; border-radius: 4px;">' +
+                    '<strong>✅ Migration terminée avec succès !</strong><br><br>' +
+                    '📊 ' + migratedCount + ' trade(s) migré(s)<br>' +
+                    '⏭️  ' + skippedCount + ' trade(s) en attente ignoré(s)<br><br>' +
+                    'Toutes vos statistiques ont été recalculées correctement.' +
+                    '</div>';
+                
+            } catch (error) {
+                console.error('❌ Erreur pendant la migration:', error);
+                statusDiv.innerHTML = '<div style="padding: 15px; background: #fee2e2; border-left: 4px solid #ef4444; color: #991b1b; border-radius: 4px;">' +
+                    '<strong>❌ Erreur pendant la migration</strong><br><br>' +
+                    'Détails : ' + error.message + '<br><br>' +
+                    'Vos données n\'ont pas été modifiées.' +
+                    '</div>';
+            }
+        }
     </script>
 </body>
 </html>
