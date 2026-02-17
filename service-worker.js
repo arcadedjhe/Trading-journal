@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trading-journal-v1.9.0';
+const CACHE_NAME = 'trading-journal-v1.9.1';
 const urlsToCache = [
   './trading-journal-indexeddb.html',
   './manifest.json'
