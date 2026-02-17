@@ -1021,23 +1021,23 @@
                         <span id="versionDate" style="color: #6b7280;">2025-01-23</span>
                     </div>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 1.9.0</strong>
+                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 1.9.1</strong>
                         <ul style="font-size: 13px; color: #6b7280; margin: 0; padding-left: 20px; line-height: 1.6;">
-                            <li>🔄 <strong>Migration automatique intégrée</strong> : Bouton dans les paramètres pour corriger les anciens trades</li>
-                            <li>✅ <strong>Plus besoin de ressaisie manuelle</strong> : La migration recalcule automatiquement tous vos trades</li>
-                            <li>🎯 <strong>Idéal pour mobile</strong> : Fonctionne directement sur téléphone, sans console JavaScript</li>
-                            <li>📊 <strong>Toutes les stats OK</strong> : Profit Factor, RR moyen, Drawdown, Frais totaux</li>
+                            <li>🔴🟢 <strong>Stratégies actives/inactives</strong> : Désactive une stratégie pour l'exclure des statistiques globales</li>
+                            <li>📊 <strong>Stats automatiquement recalculées</strong> : Profit Factor, WR, Drawdown excluent les trades des stratégies inactives</li>
+                            <li>👁️ <strong>Trades grisés</strong> : Les trades des stratégies inactives restent visibles mais marqués "exclu stats"</li>
+                            <li>✅ <strong>Réversible</strong> : Tu peux réactiver une stratégie à tout moment</li>
                         </ul>
                         <details style="margin-top: 10px;">
                             <summary style="cursor: pointer; color: #667eea; font-weight: 600;">Versions précédentes</summary>
                             <div style="margin-top: 8px; padding-left: 10px; border-left: 2px solid #e5e7eb;">
+                                <strong style="font-size: 12px; color: #6b7280;">v1.9.0 - Migration automatique</strong>
+                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
+                                    <li>Bouton migration intégré, service worker mis à jour</li>
+                                </ul>
                                 <strong style="font-size: 12px; color: #6b7280;">v1.8.10 - Tout fonctionne</strong>
                                 <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
                                     <li>Double logique finalisée, await ajouté</li>
-                                </ul>
-                                <strong style="font-size: 12px; color: #6b7280;">v1.8.7-8.9 - Corrections progressives</strong>
-                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
-                                    <li>Double logique formule vs montant</li>
                                 </ul>
                             </div>
                         </details>
@@ -1049,8 +1049,8 @@
 
     <script>
         // ========== VERSION ==========
-        const APP_VERSION = '1.9.0';
-        const VERSION_DATE = '2026-02-03';
+        const APP_VERSION = '1.9.1';
+        const VERSION_DATE = '2026-02-17';
         
         // ========== PWA Service Worker ==========
         if ('serviceWorker' in navigator) {
@@ -1255,6 +1255,7 @@
         let charts = {};
         let timeSlots = [];
         let strategies = [];
+        let inactiveStrategies = []; // v1.9.1 - Stratégies exclues des stats
         let assets = [];
         let brokers = [];
         
@@ -1322,6 +1323,7 @@
                 await loadAssets();
                 await loadBrokers();
                 await loadStrategies();
+                await loadInactiveStrategies(); // v1.9.1
                 await loadTimeSlots();
                 await loadTrades();
                 setCurrentDateTime();
@@ -1603,17 +1605,72 @@
             }
         }
 
+        // ========== INACTIVE STRATEGIES (v1.9.1) ==========
+
+        async function loadInactiveStrategies() {
+            const saved = await loadConfigDB('inactiveStrategies');
+            inactiveStrategies = saved || [];
+        }
+
+        async function saveInactiveStrategies() {
+            await saveConfigDB('inactiveStrategies', inactiveStrategies);
+        }
+
+        function isStrategyActive(strategyName) {
+            return !inactiveStrategies.includes(strategyName);
+        }
+
+        async function toggleStrategyActive(strategyName) {
+            if (isStrategyActive(strategyName)) {
+                inactiveStrategies.push(strategyName);
+            } else {
+                inactiveStrategies = inactiveStrategies.filter(function(s) { return s !== strategyName; });
+            }
+            await saveInactiveStrategies();
+            displayStrategies();
+            updateStrategyDropdown();
+            updateStats();
+            displayTrades();
+            if (document.getElementById('analysisTab').classList.contains('active')) {
+                updateCharts();
+            }
+        }
+
         function displayStrategies() {
             const container = document.getElementById('strategiesList');
             container.innerHTML = strategies.map(function(strategy, index) {
-                return '<div class="config-item"><div><div class="config-info">' + strategy + '</div></div><button class="btn-delete" onclick="deleteStrategy(' + index + ')">🗑️</button></div>';
+                const active = isStrategyActive(strategy);
+                const toggleLabel = active ? '🟢 Active' : '🔴 Inactive';
+                const toggleStyle = active 
+                    ? 'background: #d1fae5; color: #065f46; border: 1px solid #10b981;' 
+                    : 'background: #fee2e2; color: #991b1b; border: 1px solid #ef4444;';
+                const itemStyle = active ? '' : 'opacity: 0.6;';
+                
+                return '<div class="config-item" style="' + itemStyle + '">' +
+                    '<div><div class="config-info">' + strategy + '</div></div>' +
+                    '<div style="display: flex; gap: 8px; align-items: center;">' +
+                    '<button onclick="toggleStrategyActive(\'' + strategy.replace(/'/g, "\\'") + '\')" ' +
+                    'style="padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; ' + toggleStyle + '">' +
+                    toggleLabel + '</button>' +
+                    '<button class="btn-delete" onclick="deleteStrategy(' + index + ')">🗑️</button>' +
+                    '</div>' +
+                    '</div>';
             }).join('');
+            
+            // Afficher un résumé si des stratégies sont inactives
+            if (inactiveStrategies.length > 0) {
+                container.innerHTML += '<div style="margin-top: 10px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 13px; color: #92400e;">' +
+                    '⚠️ <strong>' + inactiveStrategies.length + ' stratégie(s) inactive(s)</strong> — exclues des statistiques globales.' +
+                    '</div>';
+            }
         }
 
         function updateStrategyDropdown() {
             const dropdown = document.getElementById('strategy');
             dropdown.innerHTML = strategies.map(function(s) {
-                return '<option value="' + s + '">' + s + '</option>';
+                const active = isStrategyActive(s);
+                const label = active ? s : s + ' (inactive)';
+                return '<option value="' + s + '"' + (active ? '' : ' style="color: #9ca3af;"') + '>' + label + '</option>';
             }).join('');
         }
 
@@ -2500,6 +2557,8 @@
             // Exclure les trades pending des statistiques
             const completedTrades = filteredTrades.filter(function(t) { 
                 return t.status !== 'pending'; 
+            }).filter(function(t) {
+                return isStrategyActive(t.strategy); // v1.9.1 - Exclure stratégies inactives
             });
             
             // Compter les trades en attente
@@ -2851,6 +2910,11 @@
                 const sign = trade.result === 'win' ? '+' : '-';
                 const percentSign = trade.percentReturn >= 0 ? '+' : '';
                 
+                // v1.9.1 - Indicateur visuel si stratégie inactive
+                const strategyInactive = !isStrategyActive(trade.strategy);
+                const inactiveStyle = strategyInactive ? 'opacity: 0.5; filter: grayscale(0.5);' : '';
+                const inactiveBadge = strategyInactive ? '<span style="background: #6b7280; color: white; padding: 1px 6px; border-radius: 4px; font-size: 11px; margin-left: 6px;">exclu stats</span>' : '';
+                
                 // Utiliser capitalAfter si disponible, sinon capital (rétrocompatibilité)
                 const displayCapital = trade.capitalAfter || trade.capital || 0;
                 
@@ -2881,10 +2945,10 @@
                     ? sign + trade.amount.toFixed(2) + '€ (' + trade.amountFormula + ')' 
                     : sign + trade.amount.toFixed(2) + '€';
 
-                return '<div class="trade-item ' + trade.result + '">' +
+                return '<div class="trade-item ' + trade.result + '" style="' + inactiveStyle + '">' +
                     '<div class="trade-header">' +
                     '<span class="trade-date">' + dateStr + '</span>' +
-                    '<span class="trade-strategy">' + directionIcon + ' ' + trade.strategy + '</span>' +
+                    '<span class="trade-strategy">' + directionIcon + ' ' + trade.strategy + inactiveBadge + '</span>' +
                     '</div>' +
                     '<div class="trade-result ' + resultClass + '">' +
                     amountDisplay + feesText + ' = ' + sign + netAmount.toFixed(2) + '€ net' +
@@ -2910,6 +2974,8 @@
             // Exclure les trades pending de l'analyse
             const completedTrades = filteredTrades.filter(function(t) { 
                 return t.status !== 'pending'; 
+            }).filter(function(t) {
+                return isStrategyActive(t.strategy); // v1.9.1 - Exclure stratégies inactives
             });
 
             if (completedTrades.length === 0) {
@@ -3398,6 +3464,7 @@
                     assets: assets,
                     brokers: brokers,
                     strategies: strategies,
+                    inactiveStrategies: inactiveStrategies, // v1.9.1
                     timeSlots: timeSlots,
                     initialCapital: document.getElementById('initialCapital').value
                 },
@@ -3446,6 +3513,10 @@
                         if (importData.config.strategies) {
                             strategies = importData.config.strategies;
                             await saveStrategies();
+                        }
+                        if (importData.config.inactiveStrategies) { // v1.9.1
+                            inactiveStrategies = importData.config.inactiveStrategies;
+                            await saveInactiveStrategies();
                         }
                         if (importData.config.timeSlots) {
                             timeSlots = importData.config.timeSlots;
