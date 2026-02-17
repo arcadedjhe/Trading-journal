@@ -1585,6 +1585,11 @@
             if (confirm('Supprimer la stratégie "' + strategyName + '" ?')) {
                 strategies.splice(index, 1);
                 await saveStrategies();
+                // v1.9.1 - Nettoyer inactiveStrategies si la stratégie y était
+                if (inactiveStrategies.includes(strategyName)) {
+                    inactiveStrategies = inactiveStrategies.filter(function(s) { return s !== strategyName; });
+                    await saveInactiveStrategies();
+                }
                 displayStrategies();
                 updateStrategyDropdown();
                 initializeFilters();
