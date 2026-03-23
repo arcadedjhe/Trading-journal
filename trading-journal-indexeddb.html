@@ -222,6 +222,43 @@
             color: white;
         }
 
+        /* v2.0.0 - Mode Toggle Styles */
+        .mode-toggle {
+            display: inline-flex;
+            gap: 10px;
+            background: #f3f4f6;
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: transparent;
+            color: #6b7280;
+        }
+
+        .mode-btn.active.paper {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .mode-btn.active.real {
+            background: linear-gradient(135deg, #5f7f6f 0%, #4a6359 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(95, 127, 111, 0.4);
+        }
+
+        .mode-btn:not(.active):hover {
+            background: #e5e7eb;
+        }
+
         .trades-list {
             max-height: 400px;
             overflow-y: auto;
@@ -527,7 +564,19 @@
         <div class="backup-status" id="backupStatus"></div>
 
         <div class="header">
-            <h1>📊 Journal de Trading Pro</h1>
+            <!-- v2.0.0 - Mode Selector -->
+            <div style="text-align: center; margin-bottom: 15px;">
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="paperModeBtn" onclick="switchMode('paper')">
+                        📝 PAPER
+                    </button>
+                    <button class="mode-btn" id="realModeBtn" onclick="switchMode('real')">
+                        💰 REAL
+                    </button>
+                </div>
+            </div>
+            
+            <h1 id="appTitle">📊 Journal de Trading PAPER</h1>
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-label">Trades</div>
@@ -629,12 +678,20 @@
                         <select id="broker"></select>
                     </div>
 
-                    <div class="form-group">
+                    <!-- v2.0.0 - Frais Paper (% du risque) -->
+                    <div class="form-group" id="feesPercentContainer">
                         <label>Frais (% du risque)</label>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <input type="number" id="feesPercent" placeholder="0.5" step="0.01" min="0" style="flex: 1;" oninput="updateFeesAmount()">
                             <div id="feesAmount" style="min-width: 80px; padding: 10px; background: #fff7ed; border-radius: 8px; font-size: 13px; font-weight: 600; color: #9a3412; text-align: center;">0€</div>
                         </div>
+                    </div>
+                    
+                    <!-- v2.0.0 - Frais Real (montant manuel en €) -->
+                    <div class="form-group" id="feesManualContainer" style="display: none;">
+                        <label>Frais réels payés (€)</label>
+                        <input type="number" id="feesManual" placeholder="0.00" step="0.01" min="0" oninput="updateNetAmount()">
+                        <small style="color: #6b7280; font-size: 12px;">Montant exact des frais de votre broker</small>
                     </div>
                 </div>
 
@@ -1029,23 +1086,25 @@
                         <span id="versionDate" style="color: #6b7280;">2025-01-23</span>
                     </div>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 1.9.3</strong>
+                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 2.0.0 🎉</strong>
                         <ul style="font-size: 13px; color: #6b7280; margin: 0; padding-left: 20px; line-height: 1.6;">
-                            <li>🔗 <strong>Filtres unifiés</strong> : Un filtre appliqué dans Historique s'applique aussi dans Analyse, et vice-versa</li>
-                            <li>🔄 <strong>Synchronisation automatique</strong> : Les checkboxes restent synchronisées entre les deux onglets</li>
-                            <li>📊 <strong>Mise à jour globale</strong> : Changer un filtre met à jour les stats, l'historique ET les graphiques en même temps</li>
-                            <li>🎯 <strong>Un seul bouton reset</strong> : "Réinitialiser filtres" fonctionne pour tout</li>
+                            <li>📝💰 <strong>Mode Paper / Real</strong> : Deux univers de données 100% séparés avec toggle en haut de l'app</li>
+                            <li>🎨 <strong>Design différencié</strong> : Violet pour Paper, vert pro pour Real</li>
+                            <li>💶 <strong>Frais Real manuels</strong> : Saisie directe en € des frais broker (pas de calcul automatique)</li>
+                            <li>🔄 <strong>Cross-mode import</strong> : Possibilité d'importer Paper dans Real et vice-versa (avec confirmation)</li>
+                            <li>📦 <strong>Export avec mode</strong> : Fichiers nommés "trading-journal-backup-PAPER-..." ou "...-REAL-..."</li>
+                            <li>💾 <strong>Données isolées</strong> : Capital, trades, stratégies, actifs, brokers, timeSlots séparés entre Paper et Real</li>
                         </ul>
                         <details style="margin-top: 10px;">
                             <summary style="cursor: pointer; color: #667eea; font-weight: 600;">Versions précédentes</summary>
                             <div style="margin-top: 8px; padding-left: 10px; border-left: 2px solid #e5e7eb;">
+                                <strong style="font-size: 12px; color: #6b7280;">v1.9.3 - Filtres unifiés</strong>
+                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
+                                    <li>Synchronisation filtres Historique ↔ Analyse</li>
+                                </ul>
                                 <strong style="font-size: 12px; color: #6b7280;">v1.9.2 - Nouvelles métriques</strong>
                                 <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
                                     <li>Espérance R et Gain moyen % ajoutés</li>
-                                </ul>
-                                <strong style="font-size: 12px; color: #6b7280;">v1.9.1 - Stratégies actives/inactives</strong>
-                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
-                                    <li>Toggle 🔴🟢 pour exclure stratégies des stats</li>
                                 </ul>
                             </div>
                         </details>
@@ -1057,8 +1116,11 @@
 
     <script>
         // ========== VERSION ==========
-        const APP_VERSION = '1.9.3';
+        const APP_VERSION = '2.0.0';
         const VERSION_DATE = '2026-02-04';
+        
+        // ========== v2.0.0 - MODE PAPER/REAL ==========
+        let currentMode = 'paper'; // 'paper' ou 'real'
         
         // ========== PWA Service Worker ==========
         if ('serviceWorker' in navigator) {
@@ -1194,8 +1256,141 @@
 
         // Fonction pour récupérer le capital (TOUJOURS depuis IndexedDB)
         async function getCapital() {
-            const saved = await loadConfigDB('initialCapital');
+            const saved = await loadConfigDB('initialCapital_' + currentMode);
             return parseFloat(saved) || 5000; // 5000 par défaut
+        }
+
+        // v2.0.0 - Fonction pour changer de mode Paper/Real
+        async function switchMode(newMode) {
+            if (newMode === currentMode) return; // Déjà dans ce mode
+            
+            currentMode = newMode;
+            
+            // Mettre à jour les boutons visuellement
+            const paperBtn = document.getElementById('paperModeBtn');
+            const realBtn = document.getElementById('realModeBtn');
+            
+            if (newMode === 'paper') {
+                paperBtn.classList.add('active', 'paper');
+                paperBtn.classList.remove('real');
+                realBtn.classList.remove('active', 'real', 'paper');
+            } else {
+                realBtn.classList.add('active', 'real');
+                realBtn.classList.remove('paper');
+                paperBtn.classList.remove('active', 'paper', 'real');
+            }
+            
+            // v2.0.0 - Mettre à jour le thème UI (titre, couleurs)
+            updateUITheme();
+            
+            // Recharger toutes les données du mode sélectionné
+            await loadAllData();
+            
+            // Afficher/Masquer le champ frais manuel selon le mode
+            toggleFeesField();
+            
+            // Notifier l'utilisateur
+            showBackupMessage(
+                newMode === 'paper' 
+                    ? '📝 Mode PAPER activé' 
+                    : '💰 Mode PRO activé',
+                'success'
+            );
+        }
+
+        // v2.0.0 - Fonction pour mettre à jour le thème UI selon le mode
+        function updateUITheme() {
+            const appTitle = document.getElementById('appTitle');
+            const body = document.body;
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const saveButton = document.getElementById('saveButton');
+            
+            if (currentMode === 'paper') {
+                // Mode Paper : violet/bleu
+                appTitle.textContent = '📝 Journal de Trading PAPER';
+                appTitle.style.color = '#667eea';
+                body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                
+                // Boutons onglets : style violet
+                tabButtons.forEach(function(btn) {
+                    if (btn.classList.contains('active')) {
+                        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                        btn.style.color = 'white';
+                        btn.style.borderColor = '#667eea';
+                    } else {
+                        btn.style.background = 'white';
+                        btn.style.color = '#374151';
+                        btn.style.borderColor = '#e5e7eb';
+                    }
+                });
+                
+                // Bouton Enregistrer : violet
+                if (saveButton) {
+                    saveButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }
+            } else {
+                // Mode Real : vert-gris sobre
+                appTitle.textContent = '💼 Journal de Trading PRO';
+                appTitle.style.color = '#5f7f6f';
+                body.style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+                
+                // Boutons onglets : style vert-gris
+                tabButtons.forEach(function(btn) {
+                    if (btn.classList.contains('active')) {
+                        btn.style.background = 'linear-gradient(135deg, #5f7f6f 0%, #4a6359 100%)';
+                        btn.style.color = 'white';
+                        btn.style.borderColor = '#5f7f6f';
+                    } else {
+                        btn.style.background = 'white';
+                        btn.style.color = '#374151';
+                        btn.style.borderColor = '#e5e7eb';
+                    }
+                });
+                
+                // Bouton Enregistrer : vert-gris
+                if (saveButton) {
+                    saveButton.style.background = 'linear-gradient(135deg, #5f7f6f 0%, #4a6359 100%)';
+                }
+            }
+            
+            // Mettre à jour le badge mode en bas de page
+            updateModeBadge();
+        }
+        
+        // v2.0.0 - Badge discret en bas de page
+        function updateModeBadge() {
+            let badge = document.getElementById('modeBadge');
+            if (!badge) {
+                // Créer le badge s'il n'existe pas
+                badge = document.createElement('div');
+                badge.id = 'modeBadge';
+                badge.style.cssText = 'position: fixed; bottom: 10px; right: 10px; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; opacity: 0.6; z-index: 1000;';
+                document.body.appendChild(badge);
+            }
+            
+            if (currentMode === 'paper') {
+                badge.textContent = '📝 Paper Mode';
+                badge.style.background = 'rgba(102, 126, 234, 0.9)';
+                badge.style.color = 'white';
+            } else {
+                badge.textContent = '💼 Pro Mode';
+                badge.style.background = 'rgba(95, 127, 111, 0.9)';
+                badge.style.color = 'white';
+            }
+        }
+
+        // Fonction pour afficher/masquer le champ frais selon le mode
+        function toggleFeesField() {
+            const feesPercentContainer = document.getElementById('feesPercentContainer');
+            const feesManualContainer = document.getElementById('feesManualContainer');
+            
+            if (currentMode === 'paper') {
+                feesPercentContainer.style.display = 'block';
+                feesManualContainer.style.display = 'none';
+            } else {
+                feesPercentContainer.style.display = 'none';
+                feesManualContainer.style.display = 'block';
+            }
         }
 
         // Fonction de tri chronologique stable (date puis timestamp)
@@ -1314,30 +1509,51 @@
         ];
 
         // Initialisation
+        // v2.0.0 - Charger toutes les données du mode actif
+        async function loadAllData() {
+            await loadAssets();
+            await loadBrokers();
+            await loadStrategies();
+            await loadInactiveStrategies();
+            await loadTimeSlots();
+            await loadTrades();
+            await loadCapital();
+            await loadDefaultFees();
+            await loadDefaultRisk();
+            updateAssetDropdown();
+            updateBrokerDropdown();
+            updateStrategyDropdown();
+            await updateStats();
+            displayTrades();
+            await updateCharts();
+            initializeFilters();
+            displayAssets();
+            displayBrokers();
+            displayStrategies();
+            displayTimeSlots();
+        }
+
         async function init() {
             try {
                 await initDB();
-                await loadAssets();
-                await loadBrokers();
-                await loadStrategies();
-                await loadInactiveStrategies(); // v1.9.1
-                await loadTimeSlots();
-                await loadTrades();
+                
+                // v2.0.0 - Initialiser en mode Paper par défaut
+                currentMode = 'paper';
+                const paperBtn = document.getElementById('paperModeBtn');
+                if (paperBtn) {
+                    paperBtn.classList.add('active', 'paper');
+                }
+                
+                // Mettre à jour le thème UI
+                updateUITheme();
+                
+                // Charger les données
+                await loadAllData();
+                
+                // Initialiser le toggle des frais selon le mode
+                toggleFeesField();
+                
                 setCurrentDateTime();
-                await loadCapital();
-                await loadDefaultFees();
-                await loadDefaultRisk();
-                updateAssetDropdown();
-                updateBrokerDropdown();
-                updateStrategyDropdown();
-                updateStats();
-                displayTrades();
-                initializeFilters();
-                restoreFiltersState();
-                displayAssets();
-                displayBrokers();
-                displayStrategies();
-                displayTimeSlots();
                 
                 // Afficher la version
                 displayVersion();
@@ -1363,7 +1579,7 @@
 
         // ASSETS MANAGEMENT
         async function loadAssets() {
-            const saved = await loadConfigDB('assets');
+            const saved = await loadConfigDB('assets_' + currentMode);
             if (saved) {
                 assets = saved;
             } else {
@@ -1373,7 +1589,7 @@
         }
 
         async function saveAssets() {
-            await saveConfigDB('assets', assets);
+            await saveConfigDB('assets_' + currentMode, assets);
         }
 
         async function addAsset() {
@@ -1448,7 +1664,7 @@
 
         // BROKERS MANAGEMENT
         async function loadBrokers() {
-            const saved = await loadConfigDB('brokers');
+            const saved = await loadConfigDB('brokers_' + currentMode);
             if (saved) {
                 brokers = saved;
             } else {
@@ -1458,7 +1674,7 @@
         }
 
         async function saveBrokers() {
-            await saveConfigDB('brokers', brokers);
+            await saveConfigDB('brokers_' + currentMode, brokers);
         }
 
         async function addBroker() {
@@ -1533,7 +1749,7 @@
 
         // STRATEGIES MANAGEMENT
         async function loadStrategies() {
-            const saved = await loadConfigDB('strategies');
+            const saved = await loadConfigDB('strategies_' + currentMode);
             if (saved) {
                 strategies = saved;
             } else {
@@ -1543,7 +1759,7 @@
         }
 
         async function saveStrategies() {
-            await saveConfigDB('strategies', strategies);
+            await saveConfigDB('strategies_' + currentMode, strategies);
         }
 
         async function addStrategy() {
@@ -1610,12 +1826,12 @@
         // ========== INACTIVE STRATEGIES (v1.9.1) ==========
 
         async function loadInactiveStrategies() {
-            const saved = await loadConfigDB('inactiveStrategies');
+            const saved = await loadConfigDB('inactiveStrategies_' + currentMode);
             inactiveStrategies = saved || [];
         }
 
         async function saveInactiveStrategies() {
-            await saveConfigDB('inactiveStrategies', inactiveStrategies);
+            await saveConfigDB('inactiveStrategies_' + currentMode, inactiveStrategies);
         }
 
         function isStrategyActive(strategyName) {
@@ -1678,7 +1894,7 @@
 
         // TIME SLOTS MANAGEMENT
         async function loadTimeSlots() {
-            const saved = await loadConfigDB('timeSlots');
+            const saved = await loadConfigDB('timeSlots_' + currentMode);
             if (saved) {
                 timeSlots = saved;
             } else {
@@ -1688,7 +1904,7 @@
         }
 
         async function saveTimeSlots() {
-            await saveConfigDB('timeSlots', timeSlots);
+            await saveConfigDB('timeSlots_' + currentMode, timeSlots);
         }
 
         async function addTimeSlot() {
@@ -1834,14 +2050,15 @@
         }
 
         async function loadCapital() {
-            const saved = await loadConfigDB('initialCapital');
+            const saved = await loadConfigDB('initialCapital_' + currentMode);
             if (saved) {
                 document.getElementById('initialCapital').value = saved;
             }
         }
 
         async function loadTrades() {
-            trades = await loadTradesDB();
+            const saved = await loadConfigDB('trades_' + currentMode);
+            trades = saved || [];
             
             // Recalculer les capitaux au chargement (pour la rétrocompatibilité et la cohérence)
             if (trades.length > 0) {
@@ -1850,7 +2067,7 @@
         }
 
         async function saveTrades() {
-            await saveTradesDB(trades);
+            await saveConfigDB('trades_' + currentMode, trades);
         }
 
         let editingTradeId = null;
@@ -1886,15 +2103,20 @@
         }
 
         function updateFeesAmount() {
-            const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
-            const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
-            
-            if (riskAmount > 0 && feesPercent > 0) {
-                const feesAmount = riskAmount * (feesPercent / 100);
-                document.getElementById('feesAmount').textContent = feesAmount.toFixed(2) + '€';
-            } else {
-                document.getElementById('feesAmount').textContent = '0€';
+            // v2.0.0 - Gérer les deux modes
+            if (currentMode === 'paper') {
+                // Mode Paper : calcul automatique
+                const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
+                const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
+                
+                if (riskAmount > 0 && feesPercent > 0) {
+                    const feesAmount = riskAmount * (feesPercent / 100);
+                    document.getElementById('feesAmount').textContent = feesAmount.toFixed(2) + '€';
+                } else {
+                    document.getElementById('feesAmount').textContent = '0€';
+                }
             }
+            // Mode Real : pas d'affichage automatique (montant saisi manuellement)
             
             // Mettre à jour le montant net
             updateNetAmount();
@@ -1995,10 +2217,18 @@
             }
             
             const riskAmount = parseFloat(document.getElementById('riskAmount').value) || 0;
-            const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
             
-            if (amount !== 0 && riskAmount > 0 && feesPercent > 0 && currentResult) {
-                const feesAmount = riskAmount * (feesPercent / 100);
+            // v2.0.0 - Récupérer les frais selon le mode
+            let feesAmount = 0;
+            if (currentMode === 'paper') {
+                const feesPercent = parseFloat(document.getElementById('feesPercent').value) || 0;
+                feesAmount = riskAmount * (feesPercent / 100);
+            } else {
+                // Mode Real : montant manuel
+                feesAmount = parseFloat(document.getElementById('feesManual').value) || 0;
+            }
+            
+            if (amount !== 0 && riskAmount > 0 && feesAmount > 0 && currentResult) {
                 let netAmount;
                 
                 if (hasFormula) {
@@ -2035,7 +2265,7 @@
         }
 
         async function loadDefaultFees() {
-            const saved = await loadConfigDB('defaultFees');
+            const saved = await loadConfigDB('defaultFees_' + currentMode);
             if (saved !== null) {
                 document.getElementById('defaultFees').value = saved;
             } else {
@@ -2048,7 +2278,7 @@
         }
 
         async function loadDefaultRisk() {
-            const saved = await loadConfigDB('defaultRisk');
+            const saved = await loadConfigDB('defaultRisk_' + currentMode);
             if (saved !== null) {
                 document.getElementById('defaultRisk').value = saved;
             } else {
@@ -2120,7 +2350,7 @@
                 }
             }
 
-            await saveConfigDB('initialCapital', capital);
+            await saveConfigDB('initialCapital_' + currentMode, capital);
 
             // Calculs seulement si le trade est complété
             let feesAmount = 0;
@@ -2129,8 +2359,14 @@
             let riskReward = 0;
 
             if (status === 'completed') {
-                // Calcul des frais
-                feesAmount = riskAmount * (feesPercent / 100);
+                // v2.0.0 - Calcul des frais selon le mode
+                if (currentMode === 'paper') {
+                    // Mode Paper : calcul automatique en %
+                    feesAmount = riskAmount * (feesPercent / 100);
+                } else {
+                    // Mode Real : montant manuel saisi par l'utilisateur
+                    feesAmount = parseFloat(document.getElementById('feesManual').value) || 0;
+                }
                 
                 // Détection formule vs montant simple
                 const hasFormula = /[+\-*/]/.test(amountInput);
@@ -3544,12 +3780,15 @@
                     timeSlots: timeSlots,
                     initialCapital: document.getElementById('initialCapital').value
                 },
+                mode: currentMode, // v2.0.0 - Inclure le mode dans l'export
                 exportDate: new Date().toISOString()
             };
 
             const json = JSON.stringify(exportData, null, 2);
-            downloadFile(json, 'trading-journal-backup-' + new Date().toISOString().slice(0, 10) + '.json', 'application/json');
-            showBackupMessage('✅ Backup créé avec succès', 'success');
+            const modeLabel = currentMode === 'paper' ? 'PAPER' : 'REAL';
+            const filename = 'trading-journal-backup-' + modeLabel + '-' + new Date().toISOString().slice(0, 10) + '.json';
+            downloadFile(json, filename, 'application/json');
+            showBackupMessage('✅ Backup ' + modeLabel + ' créé avec succès', 'success');
         }
 
         function importJSON() {
@@ -3565,7 +3804,21 @@
                 try {
                     const importData = JSON.parse(e.target.result);
 
-                    if (!confirm('Importer ces données ? Cela écrasera vos données actuelles.')) {
+                    // v2.0.0 - Vérifier si cross-mode
+                    const importMode = importData.mode || 'paper'; // Par défaut Paper pour anciens exports
+                    let confirmMessage = 'Importer ces données ? Cela écrasera vos données actuelles.';
+                    
+                    if (importMode !== currentMode) {
+                        const importLabel = importMode === 'paper' ? 'PAPER' : 'REAL';
+                        const currentLabel = currentMode === 'paper' ? 'PAPER' : 'REAL';
+                        confirmMessage = '⚠️ ATTENTION : Import cross-mode détecté !\n\n' +
+                            'Fichier : ' + importLabel + '\n' +
+                            'Mode actuel : ' + currentLabel + '\n\n' +
+                            'Les données ' + importLabel + ' vont écraser vos données ' + currentLabel + '.\n\n' +
+                            'Continuer ?';
+                    }
+
+                    if (!confirm(confirmMessage)) {
                         return;
                     }
 
@@ -3574,6 +3827,7 @@
                         trades = importData.trades;
                         // Recalculer les capitaux après import
                         await recalculateCapitals();
+                        await saveTrades(); // v2.0.0 - Sauvegarder dans le mode actuel
                     }
 
                     // Importer la config
@@ -3600,7 +3854,7 @@
                         }
                         if (importData.config.initialCapital) {
                             document.getElementById('initialCapital').value = importData.config.initialCapital;
-                            await saveConfigDB('initialCapital', importData.config.initialCapital);
+                            await saveConfigDB('initialCapital_' + currentMode, importData.config.initialCapital);
                         }
                     }
 
@@ -3612,8 +3866,9 @@
                     displayBrokers();
                     displayStrategies();
                     displayTimeSlots();
-                    updateStats();
+                    await updateStats();
                     displayTrades();
+                    await updateCharts();
                     initializeFilters();
 
                     showBackupMessage('✅ Import réussi !', 'success');
@@ -3769,6 +4024,9 @@
             document.querySelectorAll('.tab-btn')[index].classList.add('active');
             document.getElementById(tab + 'Tab').classList.add('active');
             
+            // v2.0.0 - Réappliquer le thème après changement d'onglet
+            updateUITheme();
+            
             if (tab === 'history') {
                 displayTrades();
             } else if (tab === 'analysis') {
@@ -3782,7 +4040,7 @@
         init();
 
         document.getElementById('initialCapital').addEventListener('input', async function() {
-            await saveConfigDB('initialCapital', this.value);
+            await saveConfigDB('initialCapital_' + currentMode, this.value);
             
             // Recalculer tous les capitaux si le capital initial change
             if (trades.length > 0) {
@@ -3799,7 +4057,7 @@
         });
 
         document.getElementById('defaultFees').addEventListener('input', async function() {
-            await saveConfigDB('defaultFees', this.value);
+            await saveConfigDB('defaultFees_' + currentMode, this.value);
             
             // Mettre à jour le champ frais dans le formulaire si on n'est pas en mode édition
             if (editingTradeId === null) {
@@ -3809,7 +4067,7 @@
         });
 
         document.getElementById('defaultRisk').addEventListener('input', async function() {
-            await saveConfigDB('defaultRisk', this.value);
+            await saveConfigDB('defaultRisk_' + currentMode, this.value);
             
             // Mettre à jour le champ risque dans le formulaire si on n'est pas en mode édition
             if (editingTradeId === null) {
