@@ -95,11 +95,11 @@
         }
 
         .stat-value.positive {
-            color: #10b981;
+            color: #5a9d7a; /* Vert émeraude sobre */
         }
 
         .stat-value.negative {
-            color: #ef4444;
+            color: #d47979; /* Rouge corail sobre */
         }
 
         .card {
@@ -327,30 +327,30 @@
         }
 
         .btn-edit {
-            background: #3b82f6;
+            background: #5b8db8; /* Bleu sobre cohérent */
             color: white;
         }
 
         .btn-edit:active {
-            background: #2563eb;
+            background: #4a7a9f; /* Version plus foncée */
         }
 
         .btn-delete-trade {
-            background: #ef4444;
+            background: #d47979; /* Rouge corail sobre */
             color: white;
         }
 
         .btn-delete-trade:active {
-            background: #dc2626;
+            background: #c26666; /* Version plus foncée */
         }
 
         .btn-resolve {
-            background: #10b981;
+            background: #5a9d7a; /* Vert émeraude sobre */
             color: white;
         }
 
         .btn-resolve:active {
-            background: #059669;
+            background: #4a8767; /* Version plus foncée */
         }
 
         .capital-input {
@@ -499,7 +499,7 @@
         }
 
         .btn-delete {
-            background: #ef4444;
+            background: #d47979; /* Rouge corail sobre */
             color: white;
             border: none;
             padding: 6px 12px;
@@ -1392,12 +1392,12 @@
                 warningButtons.forEach(function(btn) { btn.style.background = '#f59e0b'; });
                 secondaryButtons.forEach(function(btn) { btn.style.background = '#6b7280'; });
             } else {
-                // Real : couleurs sobres/désaturées
-                exportButtons.forEach(function(btn) { btn.style.background = '#6b8e7f'; }); // Vert-gris doux
-                infoButtons.forEach(function(btn) { btn.style.background = '#7b8fa3'; }); // Bleu-gris doux
-                dangerButtons.forEach(function(btn) { btn.style.background = '#a76c6c'; }); // Rouge-brun doux
-                warningButtons.forEach(function(btn) { btn.style.background = '#a8a29e'; }); // Taupe
-                secondaryButtons.forEach(function(btn) { btn.style.background = '#8b92a0'; }); // Gris doux
+                // Real : couleurs sobres mais vivantes - v2.0.0 harmonisées
+                exportButtons.forEach(function(btn) { btn.style.background = '#5a9d7a'; }); // Vert émeraude sobre
+                infoButtons.forEach(function(btn) { btn.style.background = '#5b8db8'; }); // Bleu profond sobre
+                dangerButtons.forEach(function(btn) { btn.style.background = '#d47979'; }); // Rouge corail sobre
+                warningButtons.forEach(function(btn) { btn.style.background = '#c9a967'; }); // Doré chaud sobre
+                secondaryButtons.forEach(function(btn) { btn.style.background = '#8b92a0'; }); // Gris-bleu neutre
             }
         }
         
@@ -1904,8 +1904,8 @@
                 const active = isStrategyActive(strategy);
                 const toggleLabel = active ? '🟢 Active' : '🔴 Inactive';
                 const toggleStyle = active 
-                    ? 'background: #d1fae5; color: #065f46; border: 1px solid #10b981;' 
-                    : 'background: #fee2e2; color: #991b1b; border: 1px solid #ef4444;';
+                    ? 'background: #d1fae5; color: #065f46; border: 1px solid #5a9d7a;' /* Vert émeraude */
+                    : 'background: #fee2e2; color: #991b1b; border: 1px solid #d47979;'; /* Rouge corail */
                 const itemStyle = active ? '' : 'opacity: 0.6;';
                 
                 return '<div class="config-item" style="' + itemStyle + '">' +
@@ -2296,11 +2296,11 @@
                 const netEl = document.getElementById('netAmount');
                 if (currentResult === 'win') {
                     netEl.style.background = '#f0fdf4';
-                    netEl.style.borderLeftColor = '#10b981';
+                    netEl.style.borderLeftColor = '#5a9d7a'; /* Vert émeraude */
                     netEl.style.color = '#065f46';
                 } else {
                     netEl.style.background = '#fef2f2';
-                    netEl.style.borderLeftColor = '#ef4444';
+                    netEl.style.borderLeftColor = '#d47979'; /* Rouge corail */
                     netEl.style.color = '#991b1b';
                 }
             } else {
@@ -3473,8 +3473,8 @@
                     datasets: [{
                         label: 'Drawdown %',
                         data: data,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderColor: '#d47979', /* Rouge corail sobre */
+                        backgroundColor: 'rgba(212, 121, 121, 0.1)', /* Rouge corail transparent */
                         tension: 0.4,
                         fill: true
                     }]
@@ -3507,7 +3507,7 @@
 
             const assetNames = Object.keys(assetStats);
             const pnls = assetNames.map(function(a) { return assetStats[a].pnl; });
-            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; }); /* Vert émeraude / Rouge corail */
 
             const ctx = document.getElementById('assetChart').getContext('2d');
             charts.asset = new Chart(ctx, {
@@ -3548,7 +3548,7 @@
 
             const brokerNames = Object.keys(brokerStats);
             const pnls = brokerNames.map(function(b) { return brokerStats[b].pnl; });
-            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; }); /* Vert émeraude / Rouge corail */
 
             const ctx = document.getElementById('brokerChart').getContext('2d');
             charts.broker = new Chart(ctx, {
@@ -3589,7 +3589,7 @@
 
             const strategies = Object.keys(strategyStats);
             const pnls = strategies.map(function(s) { return strategyStats[s].pnl; });
-            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; }); /* Vert émeraude / Rouge corail */
 
             const ctx = document.getElementById('strategyChart').getContext('2d');
             charts.strategy = new Chart(ctx, {
@@ -3629,7 +3629,7 @@
             });
 
             const pnls = days.map(function(d) { return dayStats[d]; });
-            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; }); /* Vert émeraude / Rouge corail */
 
             const ctx = document.getElementById('dayChart').getContext('2d');
             charts.day = new Chart(ctx, {
@@ -3672,7 +3672,7 @@
 
             const labels = timeSlots.map(function(s) { return s.label; });
             const pnls = labels.map(function(l) { return timeStats[l] || 0; });
-            const colors = pnls.map(function(p) { return p >= 0 ? '#10b981' : '#ef4444'; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; }); /* Vert émeraude / Rouge corail */
 
             const ctx = document.getElementById('timeChart').getContext('2d');
             charts.time = new Chart(ctx, {
@@ -3717,7 +3717,7 @@
                     datasets: [{
                         label: 'Valeur',
                         data: [avgWin, avgLoss, wins.length, losses.length],
-                        backgroundColor: ['#10b981', '#ef4444', '#10b981', '#ef4444']
+                        backgroundColor: ['#5a9d7a', '#d47979', '#5a9d7a', '#d47979'] /* Vert émeraude / Rouge corail */
                     }]
                 },
                 options: {
