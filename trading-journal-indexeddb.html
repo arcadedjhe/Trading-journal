@@ -2761,6 +2761,9 @@
             if (confirm(confirmMsg)) {
                 trades = trades.filter(function(t) { return t.id !== tradeId; });
                 
+                // Sauvegarder immédiatement dans IndexedDB
+                await saveTrades();
+                
                 // Recalculer les capitaux après suppression
                 await recalculateCapitals();
                 
