@@ -1304,9 +1304,10 @@
             const body = document.body;
             const tabButtons = document.querySelectorAll('.tab-btn');
             const saveButton = document.getElementById('saveButton');
+            const pendingButton = document.getElementById('pendingButton');
             
             if (currentMode === 'paper') {
-                // Mode Paper : violet/bleu
+                // Mode Paper : couleurs vives
                 appTitle.textContent = '📝 Journal de Trading PAPER';
                 appTitle.style.color = '#667eea';
                 body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
@@ -1328,8 +1329,17 @@
                 if (saveButton) {
                     saveButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
                 }
+                
+                // Bouton En attente : orange vif
+                if (pendingButton) {
+                    pendingButton.style.background = '#f59e0b';
+                }
+                
+                // Tous les boutons colorés : couleurs vives
+                applyColorTheme('paper');
+                
             } else {
-                // Mode Real : vert-gris sobre
+                // Mode Real : couleurs sobres/désaturées
                 appTitle.textContent = '💼 Journal de Trading PRO';
                 appTitle.style.color = '#5f7f6f';
                 body.style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
@@ -1351,10 +1361,44 @@
                 if (saveButton) {
                     saveButton.style.background = 'linear-gradient(135deg, #5f7f6f 0%, #4a6359 100%)';
                 }
+                
+                // Bouton En attente : taupe sobre
+                if (pendingButton) {
+                    pendingButton.style.background = '#a8a29e';
+                }
+                
+                // Tous les boutons colorés : couleurs sobres
+                applyColorTheme('real');
             }
             
             // Mettre à jour le badge mode en bas de page
             updateModeBadge();
+        }
+        
+        // v2.0.0 - Appliquer les couleurs selon le thème
+        function applyColorTheme(theme) {
+            // Boutons avec classes spécifiques
+            const exportButtons = document.querySelectorAll('.btn-export');
+            const infoButtons = document.querySelectorAll('.btn-info');
+            const dangerButtons = document.querySelectorAll('.btn-danger');
+            const warningButtons = document.querySelectorAll('.btn-warning');
+            const secondaryButtons = document.querySelectorAll('.btn-secondary');
+            
+            if (theme === 'paper') {
+                // Paper : couleurs vives (actuelles)
+                exportButtons.forEach(function(btn) { btn.style.background = '#10b981'; });
+                infoButtons.forEach(function(btn) { btn.style.background = '#3b82f6'; });
+                dangerButtons.forEach(function(btn) { btn.style.background = '#ef4444'; });
+                warningButtons.forEach(function(btn) { btn.style.background = '#f59e0b'; });
+                secondaryButtons.forEach(function(btn) { btn.style.background = '#6b7280'; });
+            } else {
+                // Real : couleurs sobres/désaturées
+                exportButtons.forEach(function(btn) { btn.style.background = '#6b8e7f'; }); // Vert-gris doux
+                infoButtons.forEach(function(btn) { btn.style.background = '#7b8fa3'; }); // Bleu-gris doux
+                dangerButtons.forEach(function(btn) { btn.style.background = '#a76c6c'; }); // Rouge-brun doux
+                warningButtons.forEach(function(btn) { btn.style.background = '#a8a29e'; }); // Taupe
+                secondaryButtons.forEach(function(btn) { btn.style.background = '#8b92a0'; }); // Gris doux
+            }
         }
         
         // v2.0.0 - Badge discret en bas de page
