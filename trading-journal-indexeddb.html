@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Trading Journal PWA - Version 2.1.0 - Duplication Real → Paper -->
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -742,6 +743,14 @@
                     <button class="btn btn-primary" id="saveButton" onclick="saveTrade('completed')" style="flex: 1;">💾 Enregistrer</button>
                     <button class="btn" id="pendingButton" onclick="saveTrade('pending')" style="flex: 1; background: #f59e0b; color: white; border: none;">⏳ En attente</button>
                 </div>
+                
+                <!-- v2.0.0 - Duplication Real → Paper -->
+                <div id="duplicateToPaperContainer" style="margin-top: 12px; padding: 10px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; display: none;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #374151;">
+                        <input type="checkbox" id="duplicateToPaper" style="width: auto; cursor: pointer;">
+                        <span>📋 Ajouter aussi en Paper (duplication automatique)</span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -1427,13 +1436,16 @@
         function toggleFeesField() {
             const feesPercentContainer = document.getElementById('feesPercentContainer');
             const feesManualContainer = document.getElementById('feesManualContainer');
+            const duplicateContainer = document.getElementById('duplicateToPaperContainer');
             
             if (currentMode === 'paper') {
                 feesPercentContainer.style.display = 'block';
                 feesManualContainer.style.display = 'none';
+                if (duplicateContainer) duplicateContainer.style.display = 'none'; // Masquer en Paper
             } else {
                 feesPercentContainer.style.display = 'none';
                 feesManualContainer.style.display = 'block';
+                if (duplicateContainer) duplicateContainer.style.display = 'block'; // Afficher en Real
             }
         }
 
@@ -2351,6 +2363,91 @@
             updateNetAmount();
         }
 
+        // v2.0.0 - Dupliquer un trade vers l'autre mode (Real → Paper)
+        async function duplicateTradeToModeSwitch(trade, targetMode) {
+            try {
+                // 1. Charger les données du mode cible
+                const targetStrategies = await loadConfigDB('strategies_' + targetMode) || [];
+                const targetAssets = await loadConfigDB('assets_' + targetMode) || [];
+                const targetBrokers = await loadConfigDB('brokers_' + targetMode) || [];
+                
+                // 2. Vérifier les conflits
+                const missingStrategies = !targetStrategies.includes(trade.strategy);
+                const missingAssets = !targetAssets.includes(trade.asset);
+                const missingBrokers = !targetBrokers.includes(trade.broker);
+                
+                // 3. Alertes si conflits
+                if (missingStrategies || missingAssets || missingBrokers) {
+                    let alertMsg = "⚠️ Éléments manquants en Paper:\n\n";
+                    if (missingStrategies) alertMsg += "• Stratégie: " + trade.strategy + "\n";
+                    if (missingAssets) alertMsg += "• Actif: " + trade.asset + "\n";
+                    if (missingBrokers) alertMsg += "• Broker: " + trade.broker + "\n";
+                    alertMsg += "\n✅ Voulez-vous les ajouter automatiquement ?";
+                    
+                    if (!confirm(alertMsg)) {
+                        return false; // Annuler la duplication
+                    }
+                    
+                    // Ajouter les éléments manquants
+                    if (missingStrategies) {
+                        targetStrategies.push(trade.strategy);
+                        await saveConfigDB('strategies_' + targetMode, targetStrategies);
+                    }
+                    if (missingAssets) {
+                        targetAssets.push(trade.asset);
+                        await saveConfigDB('assets_' + targetMode, targetAssets);
+                    }
+                    if (missingBrokers) {
+                        targetBrokers.push(trade.broker);
+                        await saveConfigDB('brokers_' + targetMode, targetBrokers);
+                    }
+                }
+                
+                // 4. Adapter le trade pour Paper
+                const paperTrade = { ...trade };
+                
+                // Nouveau ID pour éviter conflit
+                paperTrade.id = Date.now() + 1; // +1 pour éviter collision si même milliseconde
+                
+                // Convertir les frais manuels (Real) en frais % (Paper)
+                const defaultFeesPaper = await loadConfigDB('defaultFees_' + targetMode) || "10";
+                paperTrade.feesPercent = parseFloat(defaultFeesPaper);
+                
+                // Recalculer feesAmount basé sur le % Paper
+                paperTrade.feesAmount = (paperTrade.riskAmount * paperTrade.feesPercent) / 100;
+                
+                // Recalculer le montant net
+                if (paperTrade.result === 'win') {
+                    paperTrade.netAmount = paperTrade.amount - paperTrade.feesAmount;
+                } else if (paperTrade.result === 'loss') {
+                    paperTrade.netAmount = -(paperTrade.amount + paperTrade.feesAmount);
+                } else {
+                    // Trade en attente
+                    paperTrade.netAmount = 0;
+                }
+                
+                // Recalculer PnL
+                if (paperTrade.status === 'completed') {
+                    paperTrade.pnl = paperTrade.result === 'win' ? paperTrade.netAmount : -paperTrade.netAmount;
+                } else {
+                    paperTrade.pnl = 0;
+                }
+                
+                // 5. Charger les trades Paper, ajouter le nouveau, sauvegarder
+                let paperTrades = await loadConfigDB('trades_' + targetMode) || [];
+                paperTrades.push(paperTrade);
+                await saveConfigDB('trades_' + targetMode, paperTrades);
+                
+                // 6. Message de confirmation
+                showBackupMessage('✅ Trade ajouté en Paper également', 'success');
+                return true;
+            } catch (error) {
+                console.error('Erreur duplication vers Paper:', error);
+                alert('❌ Erreur lors de la duplication vers Paper: ' + error.message);
+                return false;
+            }
+        }
+
         async function saveTrade(status = 'completed') {
             const date = document.getElementById('tradeDate').value;
             const asset = document.getElementById('asset').value;
@@ -2537,6 +2634,11 @@
                 } else {
                     showBackupMessage('✅ Trade sauvegardé en sécurité', 'success');
                 }
+                
+                // v2.0.0 - Duplication Real → Paper si demandé
+                if (currentMode === 'real' && document.getElementById('duplicateToPaper').checked) {
+                    await duplicateTradeToModeSwitch(trade, 'paper');
+                }
             }
 
             updateStats();
@@ -2563,6 +2665,11 @@
                 btn.classList.remove('active');
             });
             setCurrentDateTime();
+            
+            // v2.0.0 - Décocher la checkbox duplication après sauvegarde
+            if (document.getElementById('duplicateToPaper')) {
+                document.getElementById('duplicateToPaper').checked = false;
+            }
 
             switchTab('history');
         }
@@ -2663,6 +2770,11 @@
             document.getElementById('riskReward').textContent = 'R:R 0';
             document.getElementById('feesAmount').textContent = '0€';
             document.getElementById('netAmount').style.display = 'none';
+            
+            // v2.0.0 - Décocher la checkbox duplication
+            if (document.getElementById('duplicateToPaper')) {
+                document.getElementById('duplicateToPaper').checked = false;
+            }
             
             // Recharger les valeurs par défaut
             const defaultRisk = parseFloat(document.getElementById('defaultRisk').value) || 50;
