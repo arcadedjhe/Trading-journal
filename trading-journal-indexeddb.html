@@ -2408,6 +2408,9 @@
                 // Nouveau ID pour éviter conflit
                 paperTrade.id = Date.now() + 1; // +1 pour éviter collision si même milliseconde
                 
+                // v2.1.0 - Ajouter mention dans les notes
+                paperTrade.notes = (trade.notes ? trade.notes + '\n\n' : '') + '📝 Trade passé en réel';
+                
                 // Convertir les frais manuels (Real) en frais % (Paper)
                 const defaultFeesPaper = await loadConfigDB('defaultFees_' + targetMode) || "10";
                 paperTrade.feesPercent = parseFloat(defaultFeesPaper);
@@ -3489,6 +3492,14 @@
                 '<div>' +
                 '<div class="chart-title">Distribution Gains/Pertes</div>' +
                 '<div class="chart-container"><canvas id="distributionChart"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">P&L par Mois</div>' +
+                '<div class="chart-container"><canvas id="monthlyPnlChart"></canvas></div>' +
+                '</div>' +
+                '<div>' +
+                '<div class="chart-title">P&L par Semaine</div>' +
+                '<div class="chart-container"><canvas id="weeklyPnlChart"></canvas></div>' +
                 '</div>';
 
             container.innerHTML = chartsHTML;
@@ -3501,6 +3512,8 @@
             createDayChart(completedTrades);
             createTimeChart(completedTrades);
             createDistributionChart(completedTrades);
+            createMonthlyPnlChart(completedTrades); // v2.1.0
+            createWeeklyPnlChart(completedTrades); // v2.1.0
         }
 
         async function createEquityCurve(tradesToChart) {
@@ -3839,6 +3852,128 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // v2.1.0 - Graphique P&L par Mois
+        function createMonthlyPnlChart(tradesToChart) {
+            // Grouper trades par mois
+            const monthlyData = {};
+            
+            tradesToChart.forEach(function(trade) {
+                const date = new Date(trade.date);
+                // Format : "2026-03" pour Mars 2026
+                const monthKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+                
+                if (!monthlyData[monthKey]) {
+                    monthlyData[monthKey] = 0;
+                }
+                monthlyData[monthKey] += trade.pnl;
+            });
+            
+            // Trier par date chronologique
+            const sortedMonths = Object.keys(monthlyData).sort();
+            
+            // Créer labels lisibles (ex: "Jan 2026")
+            const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+            const labels = sortedMonths.map(function(key) {
+                const parts = key.split('-');
+                const year = parts[0];
+                const month = parseInt(parts[1]) - 1;
+                return monthNames[month] + ' ' + year;
+            });
+            
+            const pnls = sortedMonths.map(function(key) { return monthlyData[key]; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; }); // Vert émeraude / Rouge corail
+            
+            const ctx = document.getElementById('monthlyPnlChart').getContext('2d');
+            charts.monthlyPnl = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'P&L Mensuel (€)',
+                        data: pnls,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(0) + '€'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // v2.1.0 - Graphique P&L par Semaine (identifié par lundi)
+        function createWeeklyPnlChart(tradesToChart) {
+            // Fonction pour obtenir le lundi de la semaine
+            function getMondayOfWeek(dateString) {
+                const d = new Date(dateString);
+                const day = d.getDay(); // 0 = Dimanche, 1 = Lundi, etc.
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajuster pour lundi
+                d.setDate(diff);
+                return d.toISOString().split('T')[0]; // Format YYYY-MM-DD
+            }
+            
+            // Grouper trades par semaine (lundi)
+            const weeklyData = {};
+            
+            tradesToChart.forEach(function(trade) {
+                const monday = getMondayOfWeek(trade.date);
+                
+                if (!weeklyData[monday]) {
+                    weeklyData[monday] = 0;
+                }
+                weeklyData[monday] += trade.pnl;
+            });
+            
+            // Trier par date chronologique
+            const sortedWeeks = Object.keys(weeklyData).sort();
+            
+            // Créer labels lisibles (ex: "Lu 24/03")
+            const labels = sortedWeeks.map(function(key) {
+                const parts = key.split('-');
+                return 'Lu ' + parts[2] + '/' + parts[1];
+            });
+            
+            const pnls = sortedWeeks.map(function(key) { return weeklyData[key]; });
+            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; }); // Vert émeraude / Rouge corail
+            
+            const ctx = document.getElementById('weeklyPnlChart').getContext('2d');
+            charts.weeklyPnl = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'P&L Hebdomadaire (€)',
+                        data: pnls,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return value.toFixed(0) + '€'; }
+                            }
+                        }
                     }
                 }
             });
