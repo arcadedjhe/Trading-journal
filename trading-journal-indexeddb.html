@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-title" content="Trading Journal">
     <title>Journal de Trading Pro</title>
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <!-- PWA Manifest - DÉSACTIVÉ pour test local -->
+    <!-- <link rel="manifest" href="manifest.json"> -->
     <meta name="theme-color" content="#667eea">
     <link rel="apple-touch-icon" href="icon-192.png">
     
@@ -626,6 +626,7 @@
             <button class="tab-btn active" onclick="switchTab('entry')">➕ Nouveau</button>
             <button class="tab-btn" onclick="switchTab('history')">📋 Historique</button>
             <button class="tab-btn" onclick="switchTab('analysis')">📈 Analyse</button>
+            <button class="tab-btn" onclick="switchTab('mm')" id="mmTabBtn">📊 MM</button>
             <button class="tab-btn" onclick="switchTab('settings')">⚙️ Config</button>
         </div>
 
@@ -869,6 +870,27 @@
             </div>
         </div>
 
+        <!-- v2.1.0 - MONEY MANAGEMENT TAB -->
+        <div id="mmTab" class="tab-content">
+            <!-- Dashboard Alertes -->
+            <div class="card">
+                <h2 style="margin-bottom: 15px; color: #374151;">🚦 État Money Management</h2>
+                
+                <div id="mmDashboard">
+                    <p class="no-data">Chargement des données...</p>
+                </div>
+            </div>
+
+            <!-- Graphiques MM -->
+            <div class="card">
+                <h2 style="margin-bottom: 15px; color: #374151;">📊 Analyses Money Management</h2>
+                
+                <div id="mmChartsContainer">
+                    <p class="no-data">Aucune donnée à afficher</p>
+                </div>
+            </div>
+        </div>
+
         <!-- SETTINGS TAB -->
         <div id="settingsTab" class="tab-content">
             <!-- BACKUP INFO -->
@@ -1080,6 +1102,103 @@
                 <div id="migrationStatus" style="margin-top: 15px; display: none;"></div>
             </div>
 
+            <!-- v2.1.0 - MONEY MANAGEMENT SETTINGS -->
+            <div class="card">
+                <h2 class="section-title">⚙️ Money Management (Mode Real uniquement)</h2>
+                
+                <div style="margin-bottom: 20px; padding: 12px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                    <strong style="color: #92400e; font-size: 13px;">ℹ️ Ces paramètres s'appliquent uniquement en mode Real</strong>
+                </div>
+
+                <!-- Circuit Breakers -->
+                <h3 style="font-size: 16px; color: #374151; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">🚦 Circuit Breakers (% du capital)</h3>
+                
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>Daily (%)</label>
+                        <input type="number" id="cbDaily" value="-2.5" step="0.1" min="-20" max="0">
+                        <small style="color: #6b7280; font-size: 11px;">Seuil quotidien (ex: -2.5% = -125€ sur 5000€)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Weekly (%)</label>
+                        <input type="number" id="cbWeekly" value="-5" step="0.1" min="-30" max="0">
+                        <small style="color: #6b7280; font-size: 11px;">Seuil hebdomadaire</small>
+                    </div>
+                </div>
+
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>Monthly (%)</label>
+                        <input type="number" id="cbMonthly" value="-8" step="0.1" min="-40" max="0">
+                        <small style="color: #6b7280; font-size: 11px;">Seuil mensuel</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Global Multi-Strat (%)</label>
+                        <input type="number" id="cbGlobal" value="-10" step="0.1" min="-50" max="0">
+                        <small style="color: #6b7280; font-size: 11px;">Seuil toutes stratégies combinées</small>
+                    </div>
+                </div>
+
+                <!-- Invalidation Seuils -->
+                <h3 style="font-size: 16px; color: #374151; margin: 25px 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">📊 Seuils d'Invalidation</h3>
+                
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>Expectancy Alerte (R)</label>
+                        <input type="number" id="expAlerte" value="0.1" step="0.05" min="0">
+                        <small style="color: #6b7280; font-size: 11px;">Sur 30 derniers trades</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Expectancy Invalid (R)</label>
+                        <input type="number" id="expInvalid" value="0" step="0.05" min="-1" max="0">
+                        <small style="color: #6b7280; font-size: 11px;">Sur 60 derniers trades</small>
+                    </div>
+                </div>
+
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>PF Alerte</label>
+                        <input type="number" id="pfAlerte" value="1.2" step="0.1" min="0.5">
+                        <small style="color: #6b7280; font-size: 11px;">Sur 50 derniers trades</small>
+                    </div>
+                    <div class="form-group">
+                        <label>PF Invalid</label>
+                        <input type="number" id="pfInvalid" value="1.0" step="0.1" min="0.5">
+                        <small style="color: #6b7280; font-size: 11px;">Sur 50 derniers trades</small>
+                    </div>
+                </div>
+
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>WR Alerte (%)</label>
+                        <input type="number" id="wrAlerte" value="28" step="1" min="0" max="100">
+                        <small style="color: #6b7280; font-size: 11px;">Sur 50 derniers trades</small>
+                    </div>
+                    <div class="form-group">
+                        <label>WR Invalid (%)</label>
+                        <input type="number" id="wrInvalid" value="25" step="1" min="0" max="100">
+                        <small style="color: #6b7280; font-size: 11px;">Sur 50 derniers trades</small>
+                    </div>
+                </div>
+
+                <div class="two-columns">
+                    <div class="form-group">
+                        <label>Pertes Consécutives Alerte</label>
+                        <input type="number" id="lossStreakAlerte" value="10" step="1" min="1">
+                        <small style="color: #6b7280; font-size: 11px;">Nombre de pertes de suite</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Pertes Consécutives Invalid</label>
+                        <input type="number" id="lossStreakInvalid" value="15" step="1" min="1">
+                        <small style="color: #6b7280; font-size: 11px;">Suspension stratégie</small>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="saveMMSettings()" style="width: 100%; margin-top: 15px;">
+                    💾 Sauvegarder les paramètres MM
+                </button>
+            </div>
+
             <!-- INFORMATION SECTION -->
             <div class="card">
                 <h2 class="section-title">ℹ️ Informations</h2>
@@ -1094,18 +1213,26 @@
                         <span id="versionDate" style="color: #6b7280;">2025-01-23</span>
                     </div>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 2.0.0 🎉</strong>
+                        <strong style="color: #374151; display: block; margin-bottom: 8px;">📝 Notes de version 2.1.0 🎯</strong>
                         <ul style="font-size: 13px; color: #6b7280; margin: 0; padding-left: 20px; line-height: 1.6;">
-                            <li>📝💰 <strong>Mode Paper / Real</strong> : Deux univers de données 100% séparés avec toggle en haut de l'app</li>
-                            <li>🎨 <strong>Design différencié</strong> : Violet pour Paper, vert pro pour Real</li>
-                            <li>💶 <strong>Frais Real manuels</strong> : Saisie directe en € des frais broker (pas de calcul automatique)</li>
-                            <li>🔄 <strong>Cross-mode import</strong> : Possibilité d'importer Paper dans Real et vice-versa (avec confirmation)</li>
-                            <li>📦 <strong>Export avec mode</strong> : Fichiers nommés "trading-journal-backup-PAPER-..." ou "...-REAL-..."</li>
-                            <li>💾 <strong>Données isolées</strong> : Capital, trades, stratégies, actifs, brokers, timeSlots séparés entre Paper et Real</li>
+                            <li>📊 <strong>Money Management complet</strong> : Onglet dédié avec dashboard temps réel (mode Real uniquement)</li>
+                            <li>🚦 <strong>Circuit Breakers</strong> : Surveillance DD Daily/Weekly/Monthly avec alertes visuelles et barres de progression</li>
+                            <li>📈 <strong>5 graphiques MM</strong> : Expectancy glissante, PF glissant, DD intraday, séries de pertes, distribution R</li>
+                            <li>🔔 <strong>Badge alertes</strong> : Notification rouge sur onglet MM en cas d'alerte critique</li>
+                            <li>⚙️ <strong>Seuils configurables</strong> : Paramètres d'invalidation par stratégie (Expectancy, PF, WR, pertes consécutives)</li>
+                            <li>📊 <strong>Tracking par stratégie</strong> : Métriques séparées pour chaque stratégie active</li>
+                            <li>📝 <strong>Duplication améliorée</strong> : Note auto "Trade passé en réel" lors duplication Real→Paper</li>
+                            <li>📅 <strong>Graphiques temporels</strong> : P&L par Mois et par Semaine dans l'onglet Analyse</li>
                         </ul>
                         <details style="margin-top: 10px;">
                             <summary style="cursor: pointer; color: #667eea; font-weight: 600;">Versions précédentes</summary>
                             <div style="margin-top: 8px; padding-left: 10px; border-left: 2px solid #e5e7eb;">
+                                <strong style="font-size: 12px; color: #6b7280;">v2.0.0 - Modes Paper/Real séparés</strong>
+                                <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
+                                    <li>Mode Paper / Real avec données 100% isolées</li>
+                                    <li>Design différencié (violet/vert)</li>
+                                    <li>Frais Real manuels, cross-mode import</li>
+                                </ul>
                                 <strong style="font-size: 12px; color: #6b7280;">v1.9.3 - Filtres unifiés</strong>
                                 <ul style="font-size: 12px; color: #9ca3af; margin: 4px 0 8px 0; padding-left: 20px;">
                                     <li>Synchronisation filtres Historique ↔ Analyse</li>
@@ -1124,13 +1251,15 @@
 
     <script>
         // ========== VERSION ==========
-        const APP_VERSION = '2.0.0';
-        const VERSION_DATE = '2026-02-04';
+        const APP_VERSION = '2.1.0';
+        const VERSION_DATE = '2026-04-02';
         
         // ========== v2.0.0 - MODE PAPER/REAL ==========
         let currentMode = 'paper'; // 'paper' ou 'real'
         
         // ========== PWA Service Worker ==========
+        // DÉSACTIVÉ pour test local - Réactiver sur serveur HTTP
+        /*
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('./service-worker.js')
@@ -1142,6 +1271,7 @@
                     });
             });
         }
+        */
         
         // ========== IndexedDB Configuration ==========
         const DB_NAME = 'TradingJournalDB';
@@ -1436,15 +1566,39 @@
             const feesPercentContainer = document.getElementById('feesPercentContainer');
             const feesManualContainer = document.getElementById('feesManualContainer');
             const duplicateContainer = document.getElementById('duplicateToPaperContainer');
+            const mmTabBtn = document.getElementById('mmTabBtn');
             
             if (currentMode === 'paper') {
                 feesPercentContainer.style.display = 'block';
                 feesManualContainer.style.display = 'none';
                 if (duplicateContainer) duplicateContainer.style.display = 'none'; // Masquer en Paper
+                // v2.1.0 - Masquer onglet MM en Paper
+                if (mmTabBtn) mmTabBtn.style.display = 'none';
             } else {
                 feesPercentContainer.style.display = 'none';
                 feesManualContainer.style.display = 'block';
                 if (duplicateContainer) duplicateContainer.style.display = 'block'; // Afficher en Real
+                // v2.1.0 - Afficher onglet MM en Real + vérifier alertes pour badge
+                if (mmTabBtn) {
+                    mmTabBtn.style.display = 'inline-block';
+                    // Mettre à jour le badge d'alerte
+                    updateMMBadge();
+                }
+            }
+        }
+
+        // v2.1.0 - Mettre à jour le badge d'alerte sur l'onglet MM
+        async function updateMMBadge() {
+            const mmTabBtn = document.getElementById('mmTabBtn');
+            if (!mmTabBtn || currentMode !== 'real') return;
+            
+            const alerts = await checkMoneyManagementAlerts();
+            const criticalAlerts = alerts.filter(function(a) { return a.level === 'critical'; });
+            
+            if (criticalAlerts.length > 0) {
+                mmTabBtn.innerHTML = '📊 MM <span style="background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-left: 4px;">' + criticalAlerts.length + '</span>';
+            } else {
+                mmTabBtn.innerHTML = '📊 MM';
             }
         }
 
@@ -1588,6 +1742,686 @@
             displayTimeSlots();
         }
 
+        // ========================================
+        // v2.1.0 - MONEY MANAGEMENT FUNCTIONS
+        // ========================================
+
+        // Charger les paramètres MM
+        async function loadMMSettings() {
+            const defaults = {
+                cbDaily: -2.5,
+                cbWeekly: -5,
+                cbMonthly: -8,
+                cbGlobal: -10,
+                expAlerte: 0.1,
+                expInvalid: 0,
+                pfAlerte: 1.2,
+                pfInvalid: 1.0,
+                wrAlerte: 28,
+                wrInvalid: 25,
+                lossStreakAlerte: 10,
+                lossStreakInvalid: 15
+            };
+            
+            const saved = await loadConfigDB('mmSettings_' + currentMode);
+            return saved || defaults;
+        }
+
+        // Sauvegarder les paramètres MM
+        async function saveMMSettings() {
+            const settings = {
+                cbDaily: parseFloat(document.getElementById('cbDaily').value),
+                cbWeekly: parseFloat(document.getElementById('cbWeekly').value),
+                cbMonthly: parseFloat(document.getElementById('cbMonthly').value),
+                cbGlobal: parseFloat(document.getElementById('cbGlobal').value),
+                expAlerte: parseFloat(document.getElementById('expAlerte').value),
+                expInvalid: parseFloat(document.getElementById('expInvalid').value),
+                pfAlerte: parseFloat(document.getElementById('pfAlerte').value),
+                pfInvalid: parseFloat(document.getElementById('pfInvalid').value),
+                wrAlerte: parseFloat(document.getElementById('wrAlerte').value),
+                wrInvalid: parseFloat(document.getElementById('wrInvalid').value),
+                lossStreakAlerte: parseInt(document.getElementById('lossStreakAlerte').value),
+                lossStreakInvalid: parseInt(document.getElementById('lossStreakInvalid').value)
+            };
+            
+            await saveConfigDB('mmSettings_' + currentMode, settings);
+            alert('✅ Paramètres Money Management sauvegardés');
+        }
+
+        // Calculer drawdown journalier (depuis minuit)
+        async function calculateDailyDrawdown() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const todayTrades = trades.filter(function(t) {
+                const tradeDate = new Date(t.date);
+                return tradeDate >= today && t.status === 'completed';
+            });
+            
+            const dailyPnl = todayTrades.reduce(function(sum, t) { return sum + t.pnl; }, 0);
+            const capital = await getCapital();
+            return (dailyPnl / capital) * 100;
+        }
+
+        // Calculer drawdown hebdomadaire (depuis lundi)
+        async function calculateWeeklyDrawdown() {
+            const now = new Date();
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Lundi
+            const monday = new Date(now);
+            monday.setDate(diff);
+            monday.setHours(0, 0, 0, 0);
+            
+            const weekTrades = trades.filter(function(t) {
+                const tradeDate = new Date(t.date);
+                return tradeDate >= monday && t.status === 'completed';
+            });
+            
+            const weeklyPnl = weekTrades.reduce(function(sum, t) { return sum + t.pnl; }, 0);
+            const capital = await getCapital();
+            return (weeklyPnl / capital) * 100;
+        }
+
+        // Calculer drawdown mensuel (depuis 1er du mois)
+        async function calculateMonthlyDrawdown() {
+            const now = new Date();
+            const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            firstOfMonth.setHours(0, 0, 0, 0);
+            
+            const monthTrades = trades.filter(function(t) {
+                const tradeDate = new Date(t.date);
+                return tradeDate >= firstOfMonth && t.status === 'completed';
+            });
+            
+            const monthlyPnl = monthTrades.reduce(function(sum, t) { return sum + t.pnl; }, 0);
+            const capital = await getCapital();
+            return (monthlyPnl / capital) * 100;
+        }
+
+        // Calculer expectancy glissante (n derniers trades)
+        function calculateRollingExpectancy(n, strategyFilter) {
+            let completedTrades = trades.filter(function(t) { return t.status === 'completed'; });
+            
+            // Filtre par stratégie si spécifié
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(function(t) { return t.strategy === strategyFilter; });
+            }
+            
+            // Trier par date décroissante et prendre les n derniers
+            const sortedTrades = sortTradesByDate(completedTrades, true);
+            const lastN = sortedTrades.slice(0, n);
+            
+            if (lastN.length === 0) return null;
+            
+            // Calculer expectancy en R
+            const totalR = lastN.reduce(function(sum, t) {
+                if (t.result === 'win') {
+                    return sum + (t.netAmount / t.riskAmount);
+                } else if (t.result === 'loss') {
+                    return sum - (Math.abs(t.netAmount) / t.riskAmount);
+                } else {
+                    return sum; // BE = 0R
+                }
+            }, 0);
+            
+            return totalR / lastN.length;
+        }
+
+        // Calculer Profit Factor glissant (n derniers trades)
+        function calculateRollingProfitFactor(n, strategyFilter) {
+            let completedTrades = trades.filter(function(t) { return t.status === 'completed'; });
+            
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(function(t) { return t.strategy === strategyFilter; });
+            }
+            
+            const sortedTrades = sortTradesByDate(completedTrades, true);
+            const lastN = sortedTrades.slice(0, n);
+            
+            if (lastN.length === 0) return null;
+            
+            const wins = lastN.filter(function(t) { return t.result === 'win'; });
+            const losses = lastN.filter(function(t) { return t.result === 'loss'; });
+            
+            const totalWins = wins.reduce(function(sum, t) { return sum + t.amount; }, 0);
+            const totalLosses = losses.reduce(function(sum, t) { return sum + t.amount; }, 0);
+            
+            return totalLosses > 0 ? totalWins / totalLosses : (totalWins > 0 ? 999 : 0);
+        }
+
+        // Calculer WinRate glissant (n derniers trades)
+        function calculateRollingWinRate(n, strategyFilter) {
+            let completedTrades = trades.filter(function(t) { return t.status === 'completed'; });
+            
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(function(t) { return t.strategy === strategyFilter; });
+            }
+            
+            const sortedTrades = sortTradesByDate(completedTrades, true);
+            const lastN = sortedTrades.slice(0, n);
+            
+            if (lastN.length === 0) return null;
+            
+            const wins = lastN.filter(function(t) { return t.result === 'win'; }).length;
+            return (wins / lastN.length) * 100;
+        }
+
+        // Calculer série de pertes consécutives actuelle
+        function getCurrentLossStreak(strategyFilter) {
+            let completedTrades = trades.filter(function(t) { return t.status === 'completed'; });
+            
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(function(t) { return t.strategy === strategyFilter; });
+            }
+            
+            const sortedTrades = sortTradesByDate(completedTrades, true);
+            
+            let streak = 0;
+            for (let i = 0; i < sortedTrades.length; i++) {
+                if (sortedTrades[i].result === 'loss') {
+                    streak++;
+                } else {
+                    break; // Arrêter dès qu'on trouve un non-loss
+                }
+            }
+            
+            return streak;
+        }
+
+        // Obtenir la liste des stratégies uniques
+        function getUniqueStrategies() {
+            const stratSet = new Set();
+            trades.forEach(function(t) {
+                if (t.strategy && t.status === 'completed') {
+                    stratSet.add(t.strategy);
+                }
+            });
+            return Array.from(stratSet);
+        }
+
+        // Vérifier les alertes MM
+        async function checkMoneyManagementAlerts() {
+            if (currentMode !== 'real') return []; // Uniquement en mode Real
+            
+            const alerts = [];
+            const settings = await loadMMSettings();
+            
+            // Drawdowns
+            const dailyDD = await calculateDailyDrawdown();
+            const weeklyDD = await calculateWeeklyDrawdown();
+            const monthlyDD = await calculateMonthlyDrawdown();
+            
+            // Circuit Breakers Daily
+            if (dailyDD <= settings.cbDaily) {
+                alerts.push({
+                    level: 'critical',
+                    type: 'cb_daily',
+                    message: '🛑 STOP - Circuit Breaker Daily atteint (' + dailyDD.toFixed(2) + '%)'
+                });
+            } else if (dailyDD <= settings.cbDaily * 0.8) {
+                alerts.push({
+                    level: 'warning',
+                    type: 'cb_daily',
+                    message: '⚠️ Circuit Breaker Daily proche (' + dailyDD.toFixed(2) + '% / ' + settings.cbDaily + '%)'
+                });
+            }
+            
+            // Circuit Breakers Weekly
+            if (weeklyDD <= settings.cbWeekly) {
+                alerts.push({
+                    level: 'critical',
+                    type: 'cb_weekly',
+                    message: '🛑 STOP - Circuit Breaker Weekly atteint (' + weeklyDD.toFixed(2) + '%)'
+                });
+            } else if (weeklyDD <= settings.cbWeekly * 0.8) {
+                alerts.push({
+                    level: 'warning',
+                    type: 'cb_weekly',
+                    message: '⚠️ Circuit Breaker Weekly proche (' + weeklyDD.toFixed(2) + '% / ' + settings.cbWeekly + '%)'
+                });
+            }
+            
+            // Circuit Breakers Monthly
+            if (monthlyDD <= settings.cbMonthly) {
+                alerts.push({
+                    level: 'critical',
+                    type: 'cb_monthly',
+                    message: '🛑 STOP - Circuit Breaker Monthly atteint (' + monthlyDD.toFixed(2) + '%)'
+                });
+            } else if (monthlyDD <= settings.cbMonthly * 0.8) {
+                alerts.push({
+                    level: 'warning',
+                    type: 'cb_monthly',
+                    message: '⚠️ Circuit Breaker Monthly proche (' + monthlyDD.toFixed(2) + '% / ' + settings.cbMonthly + '%)'
+                });
+            }
+            
+            // Par stratégie
+            const strategies = getUniqueStrategies();
+            strategies.forEach(function(strategy) {
+                const exp30 = calculateRollingExpectancy(30, strategy);
+                const exp60 = calculateRollingExpectancy(60, strategy);
+                const pf50 = calculateRollingProfitFactor(50, strategy);
+                const wr50 = calculateRollingWinRate(50, strategy);
+                const lossStreak = getCurrentLossStreak(strategy);
+                
+                // Expectancy
+                if (exp60 !== null && exp60 <= settings.expInvalid) {
+                    alerts.push({
+                        level: 'critical',
+                        type: 'invalidation',
+                        message: '🚫 ' + strategy + ' : Expectancy < ' + settings.expInvalid + 'R sur 60 trades (INVALIDÉE)'
+                    });
+                } else if (exp30 !== null && exp30 <= settings.expAlerte) {
+                    alerts.push({
+                        level: 'warning',
+                        type: 'surveillance',
+                        message: '⚠️ ' + strategy + ' : Expectancy < ' + settings.expAlerte + 'R (surveillance)'
+                    });
+                }
+                
+                // Profit Factor
+                if (pf50 !== null && pf50 <= settings.pfInvalid) {
+                    alerts.push({
+                        level: 'critical',
+                        type: 'invalidation',
+                        message: '🚫 ' + strategy + ' : PF < ' + settings.pfInvalid + ' sur 50 trades'
+                    });
+                } else if (pf50 !== null && pf50 <= settings.pfAlerte) {
+                    alerts.push({
+                        level: 'warning',
+                        type: 'surveillance',
+                        message: '⚠️ ' + strategy + ' : PF < ' + settings.pfAlerte + ' (surveillance)'
+                    });
+                }
+                
+                // WinRate
+                if (wr50 !== null && wr50 <= settings.wrInvalid) {
+                    alerts.push({
+                        level: 'critical',
+                        type: 'invalidation',
+                        message: '🚫 ' + strategy + ' : WR < ' + settings.wrInvalid + '% sur 50 trades'
+                    });
+                } else if (wr50 !== null && wr50 <= settings.wrAlerte) {
+                    alerts.push({
+                        level: 'warning',
+                        type: 'surveillance',
+                        message: '⚠️ ' + strategy + ' : WR < ' + settings.wrAlerte + '% (surveillance)'
+                    });
+                }
+                
+                // Pertes consécutives
+                if (lossStreak >= settings.lossStreakInvalid) {
+                    alerts.push({
+                        level: 'critical',
+                        type: 'invalidation',
+                        message: '🚫 ' + strategy + ' : ' + lossStreak + ' pertes consécutives (SUSPENSION)'
+                    });
+                } else if (lossStreak >= settings.lossStreakAlerte) {
+                    alerts.push({
+                        level: 'warning',
+                        type: 'surveillance',
+                        message: '⚠️ ' + strategy + ' : ' + lossStreak + ' pertes consécutives (alerte)'
+                    });
+                }
+            });
+            
+            return alerts;
+        }
+
+        // ==========================================
+        // v2.1.0 - MONEY MANAGEMENT FUNCTIONS
+        // ==========================================
+
+        // Charger les paramètres MM depuis IndexedDB
+        async function loadMMSettings() {
+            const settingsKey = `mmSettings_${currentMode}`;
+            
+            const settings = await loadConfigDB(settingsKey);
+            
+            // Valeurs par défaut si rien en DB
+            const defaultSettings = {
+                cbDaily: -2.5,
+                cbWeekly: -5,
+                cbMonthly: -8,
+                cbGlobal: -10,
+                expAlerte: 0.1,
+                expInvalid: 0,
+                pfAlerte: 1.2,
+                pfInvalid: 1.0,
+                wrAlerte: 28,
+                wrInvalid: 25,
+                lossStreakAlerte: 10,
+                lossStreakInvalid: 15
+            };
+            
+            return settings || defaultSettings;
+        }
+
+        // Sauvegarder les paramètres MM dans IndexedDB
+        async function saveMMSettings() {
+            const settingsKey = `mmSettings_${currentMode}`;
+            
+            const settings = {
+                cbDaily: parseFloat(document.getElementById('cbDaily').value),
+                cbWeekly: parseFloat(document.getElementById('cbWeekly').value),
+                cbMonthly: parseFloat(document.getElementById('cbMonthly').value),
+                cbGlobal: parseFloat(document.getElementById('cbGlobal').value),
+                expAlerte: parseFloat(document.getElementById('expAlerte').value),
+                expInvalid: parseFloat(document.getElementById('expInvalid').value),
+                pfAlerte: parseFloat(document.getElementById('pfAlerte').value),
+                pfInvalid: parseFloat(document.getElementById('pfInvalid').value),
+                wrAlerte: parseFloat(document.getElementById('wrAlerte').value),
+                wrInvalid: parseFloat(document.getElementById('wrInvalid').value),
+                lossStreakAlerte: parseInt(document.getElementById('lossStreakAlerte').value),
+                lossStreakInvalid: parseInt(document.getElementById('lossStreakInvalid').value)
+            };
+            
+            await saveConfigDB(settingsKey, settings);
+            alert('✅ Paramètres Money Management sauvegardés');
+        }
+
+        // Calculer le Drawdown Daily (depuis minuit)
+        async function calculateDailyDrawdown() {
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+            
+            const todayTrades = trades.filter(t => t.status === 'completed' && new Date(t.date) >= startOfDay);
+            
+            const totalPnL = todayTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+            const capital = await getCapital();
+            
+            return (totalPnL / capital) * 100;
+        }
+
+        // Calculer le Drawdown Weekly (depuis lundi)
+        async function calculateWeeklyDrawdown() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 0=dimanche -> 6 jours en arrière
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - diff);
+            monday.setHours(0, 0, 0, 0);
+            
+            const weekTrades = trades.filter(t => t.status === 'completed' && new Date(t.date) >= monday);
+            
+            const totalPnL = weekTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+            const capital = await getCapital();
+            
+            return (totalPnL / capital) * 100;
+        }
+
+        // Calculer le Drawdown Monthly (depuis le 1er du mois)
+        async function calculateMonthlyDrawdown() {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+            
+            const monthTrades = trades.filter(t => t.status === 'completed' && new Date(t.date) >= startOfMonth);
+            
+            const totalPnL = monthTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+            const capital = await getCapital();
+            
+            return (totalPnL / capital) * 100;
+        }
+
+        // Calculer l'Expectancy glissante sur n derniers trades
+        function calculateRollingExpectancy(n = 30, strategyFilter = null) {
+            let completedTrades = trades.filter(t => t.status === 'completed');
+            
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(t => t.strategy === strategyFilter);
+            }
+            
+            // Trier par date décroissante et prendre les n derniers
+            const lastN = completedTrades
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, n);
+            
+            if (lastN.length === 0) return null;
+            
+            // Calculer rMultiple pour chaque trade : pnl / riskAmount
+            const avgR = lastN.reduce((sum, t) => {
+                const rMultiple = (t.riskAmount && t.riskAmount > 0) ? (t.pnl / t.riskAmount) : 0;
+                return sum + rMultiple;
+            }, 0) / lastN.length;
+            return avgR;
+        }
+
+        // Calculer le Profit Factor glissant sur n derniers trades
+        function calculateRollingProfitFactor(n = 50, strategyFilter = null) {
+            let completedTrades = trades.filter(t => t.status === 'completed');
+            
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(t => t.strategy === strategyFilter);
+            }
+            
+            const lastN = completedTrades
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, n);
+            
+            if (lastN.length === 0) return null;
+            
+            const totalWins = lastN.filter(t => (t.pnl || 0) > 0).reduce((sum, t) => sum + t.pnl, 0);
+            const totalLosses = Math.abs(lastN.filter(t => (t.pnl || 0) < 0).reduce((sum, t) => sum + t.pnl, 0));
+            
+            if (totalLosses === 0) return totalWins > 0 ? 999 : 0;
+            return totalWins / totalLosses;
+        }
+
+        // Calculer le WinRate glissant sur n derniers trades
+        function calculateRollingWinRate(n = 50, strategyFilter = null) {
+            let completedTrades = trades.filter(t => t.status === 'completed');
+            
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(t => t.strategy === strategyFilter);
+            }
+            
+            const lastN = completedTrades
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, n);
+            
+            if (lastN.length === 0) return null;
+            
+            const wins = lastN.filter(t => (t.pnl || 0) > 0).length;
+            return (wins / lastN.length) * 100;
+        }
+
+        // Calculer la série de pertes consécutives actuelle
+        function getCurrentLossStreak(strategyFilter = null) {
+            let completedTrades = trades.filter(t => t.status === 'completed');
+            
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(t => t.strategy === strategyFilter);
+            }
+            
+            // Trier par date décroissante (les plus récents d'abord)
+            const sortedTrades = completedTrades.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let streak = 0;
+            for (const trade of sortedTrades) {
+                if ((trade.pnl || 0) < 0) {
+                    streak++;
+                } else {
+                    break; // Dès qu'on trouve un gain, on arrête
+                }
+            }
+            
+            return streak;
+        }
+
+        // Obtenir la liste des stratégies uniques avec des trades complétés
+        function getUniqueStrategies() {
+            const strategies = new Set();
+            trades.filter(t => t.status === 'completed').forEach(t => {
+                if (t.strategy) strategies.add(t.strategy);
+            });
+            return Array.from(strategies);
+        }
+        
+        // Compter le nombre de trades complétés pour une stratégie
+        function getStrategyTradeCount(strategyFilter = null) {
+            let completedTrades = trades.filter(t => t.status === 'completed');
+            if (strategyFilter) {
+                completedTrades = completedTrades.filter(t => t.strategy === strategyFilter);
+            }
+            return completedTrades.length;
+        }
+
+        // Vérifier tous les seuils MM et retourner les alertes
+        async function checkMoneyManagementAlerts() {
+            // Charger les paramètres MM
+            const settingsKey = `mmSettings_${currentMode}`;
+            const settings = await loadConfigDB(settingsKey);
+            
+            if (!settings) return []; // Pas de paramètres configurés
+            
+            const alerts = [];
+            
+            // 1. Circuit Breakers
+            const ddDaily = await calculateDailyDrawdown();
+            const ddWeekly = await calculateWeeklyDrawdown();
+            const ddMonthly = await calculateMonthlyDrawdown();
+            
+            if (ddDaily <= settings.cbDaily) {
+                alerts.push({
+                    level: 'critical',
+                    type: 'cb_daily',
+                    message: `🚨 Circuit Breaker Daily ATTEINT : ${ddDaily.toFixed(2)}% (seuil: ${settings.cbDaily}%)`
+                });
+            } else if (ddDaily <= settings.cbDaily * 0.8) {
+                alerts.push({
+                    level: 'warning',
+                    type: 'cb_daily',
+                    message: `⚠️ Proche du Circuit Breaker Daily : ${ddDaily.toFixed(2)}% (seuil: ${settings.cbDaily}%)`
+                });
+            }
+            
+            if (ddWeekly <= settings.cbWeekly) {
+                alerts.push({
+                    level: 'critical',
+                    type: 'cb_weekly',
+                    message: `🚨 Circuit Breaker Weekly ATTEINT : ${ddWeekly.toFixed(2)}% (seuil: ${settings.cbWeekly}%)`
+                });
+            } else if (ddWeekly <= settings.cbWeekly * 0.8) {
+                alerts.push({
+                    level: 'warning',
+                    type: 'cb_weekly',
+                    message: `⚠️ Proche du Circuit Breaker Weekly : ${ddWeekly.toFixed(2)}% (seuil: ${settings.cbWeekly}%)`
+                });
+            }
+            
+            if (ddMonthly <= settings.cbMonthly) {
+                alerts.push({
+                    level: 'critical',
+                    type: 'cb_monthly',
+                    message: `🚨 Circuit Breaker Monthly ATTEINT : ${ddMonthly.toFixed(2)}% (seuil: ${settings.cbMonthly}%)`
+                });
+            } else if (ddMonthly <= settings.cbMonthly * 0.8) {
+                alerts.push({
+                    level: 'warning',
+                    type: 'cb_monthly',
+                    message: `⚠️ Proche du Circuit Breaker Monthly : ${ddMonthly.toFixed(2)}% (seuil: ${settings.cbMonthly}%)`
+                });
+            }
+            
+            // 2. Invalidation par stratégie
+            const strategies = getUniqueStrategies();
+            
+            for (const strategy of strategies) {
+                const tradeCount = getStrategyTradeCount(strategy);
+                
+                // Expectancy 30 trades (vérifier qu'on a au moins 30 trades)
+                if (tradeCount >= 30) {
+                    const exp30 = calculateRollingExpectancy(30, strategy);
+                    if (exp30 !== null) {
+                        if (exp30 <= settings.expInvalid) {
+                            alerts.push({
+                                level: 'critical',
+                                type: 'invalidation',
+                                message: `🚨 ${strategy} : Expectancy 30T INVALIDE (${exp30.toFixed(2)}R < ${settings.expInvalid}R)`
+                            });
+                        } else if (exp30 <= settings.expAlerte) {
+                            alerts.push({
+                                level: 'warning',
+                                type: 'surveillance',
+                                message: `⚠️ ${strategy} : Expectancy 30T en alerte (${exp30.toFixed(2)}R < ${settings.expAlerte}R)`
+                            });
+                        }
+                    }
+                }
+                
+                // Expectancy 60 trades (vérifier qu'on a au moins 60 trades)
+                if (tradeCount >= 60) {
+                    const exp60 = calculateRollingExpectancy(60, strategy);
+                    if (exp60 !== null && exp60 <= settings.expInvalid) {
+                        alerts.push({
+                            level: 'critical',
+                            type: 'invalidation',
+                            message: `🚨 ${strategy} : Expectancy 60T INVALIDE (${exp60.toFixed(2)}R < ${settings.expInvalid}R)`
+                        });
+                    }
+                }
+                
+                // Profit Factor 50 trades (vérifier qu'on a au moins 50 trades)
+                if (tradeCount >= 50) {
+                    const pf50 = calculateRollingProfitFactor(50, strategy);
+                    if (pf50 !== null) {
+                        if (pf50 <= settings.pfInvalid) {
+                            alerts.push({
+                                level: 'critical',
+                                type: 'invalidation',
+                                message: `🚨 ${strategy} : PF 50T INVALIDE (${pf50.toFixed(2)} < ${settings.pfInvalid})`
+                            });
+                        } else if (pf50 <= settings.pfAlerte) {
+                            alerts.push({
+                                level: 'warning',
+                                type: 'surveillance',
+                                message: `⚠️ ${strategy} : PF 50T en alerte (${pf50.toFixed(2)} < ${settings.pfAlerte})`
+                            });
+                        }
+                    }
+                }
+                
+                // WinRate 50 trades (vérifier qu'on a au moins 50 trades)
+                if (tradeCount >= 50) {
+                    const wr50 = calculateRollingWinRate(50, strategy);
+                    if (wr50 !== null) {
+                        if (wr50 <= settings.wrInvalid) {
+                            alerts.push({
+                                level: 'critical',
+                                type: 'invalidation',
+                                message: `🚨 ${strategy} : WR 50T INVALIDE (${wr50.toFixed(1)}% < ${settings.wrInvalid}%)`
+                            });
+                        } else if (wr50 <= settings.wrAlerte) {
+                            alerts.push({
+                                level: 'warning',
+                                type: 'surveillance',
+                                message: `⚠️ ${strategy} : WR 50T en alerte (${wr50.toFixed(1)}% < ${settings.wrAlerte}%)`
+                            });
+                        }
+                    }
+                }
+                
+                // Séries de pertes consécutives
+                const lossStreak = getCurrentLossStreak(strategy);
+                if (lossStreak >= settings.lossStreakInvalid) {
+                    alerts.push({
+                        level: 'critical',
+                        type: 'invalidation',
+                        message: `🚨 ${strategy} : ${lossStreak} pertes consécutives (seuil: ${settings.lossStreakInvalid})`
+                    });
+                } else if (lossStreak >= settings.lossStreakAlerte) {
+                    alerts.push({
+                        level: 'warning',
+                        type: 'surveillance',
+                        message: `⚠️ ${strategy} : ${lossStreak} pertes consécutives (seuil alerte: ${settings.lossStreakAlerte})`
+                    });
+                }
+            }
+            
+            return alerts;
+        }
+
         async function init() {
             try {
                 await initDB();
@@ -1604,6 +2438,21 @@
                 
                 // Charger les données
                 await loadAllData();
+                
+                // v2.1.0 - Charger et afficher les paramètres MM
+                const mmSettings = await loadMMSettings();
+                document.getElementById('cbDaily').value = mmSettings.cbDaily;
+                document.getElementById('cbWeekly').value = mmSettings.cbWeekly;
+                document.getElementById('cbMonthly').value = mmSettings.cbMonthly;
+                document.getElementById('cbGlobal').value = mmSettings.cbGlobal;
+                document.getElementById('expAlerte').value = mmSettings.expAlerte;
+                document.getElementById('expInvalid').value = mmSettings.expInvalid;
+                document.getElementById('pfAlerte').value = mmSettings.pfAlerte;
+                document.getElementById('pfInvalid').value = mmSettings.pfInvalid;
+                document.getElementById('wrAlerte').value = mmSettings.wrAlerte;
+                document.getElementById('wrInvalid').value = mmSettings.wrInvalid;
+                document.getElementById('lossStreakAlerte').value = mmSettings.lossStreakAlerte;
+                document.getElementById('lossStreakInvalid').value = mmSettings.lossStreakInvalid;
                 
                 // Initialiser le toggle des frais selon le mode
                 toggleFeesField();
@@ -2646,6 +3495,11 @@
             updateStats();
             displayTrades();
             initializeFilters();
+            
+            // v2.1.0 - Mettre à jour badge MM si en mode Real
+            if (currentMode === 'real') {
+                updateMMBadge();
+            }
 
             document.getElementById('amount').value = '';
             document.getElementById('notes').value = '';
@@ -2886,6 +3740,11 @@
                 initializeFilters();
                 calculateStorageSize();
                 showBackupMessage('✅ Trade supprimé', 'success');
+                
+                // v2.1.0 - Mettre à jour badge MM si en mode Real
+                if (currentMode === 'real') {
+                    updateMMBadge();
+                }
             }
         }
 
@@ -3438,6 +4297,556 @@
                     '</div>' +
                     '</div>';
             }).join('');
+        }
+
+        // ==========================================
+        // v2.1.0 - MONEY MANAGEMENT UI
+        // ==========================================
+
+        async function updateMMDashboard() {
+            // Dashboard MM uniquement en mode Real
+            if (currentMode !== 'real') {
+                document.getElementById('mmDashboard').innerHTML = `
+                    <div style="padding: 20px; text-align: center; background: #fef3c7; border-radius: 8px;">
+                        <strong style="color: #92400e;">ℹ️ Le Money Management est disponible uniquement en mode Real</strong>
+                        <p style="margin-top: 8px; font-size: 13px; color: #78350f;">Passez en mode Real pour accéder au dashboard MM</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const settingsKey = `mmSettings_${currentMode}`;
+            const settings = await loadConfigDB(settingsKey);
+            
+            if (!settings) {
+                document.getElementById('mmDashboard').innerHTML = `
+                    <div style="padding: 20px; text-align: center; background: #fee2e2; border-radius: 8px;">
+                        <strong style="color: #991b1b;">⚠️ Paramètres MM non configurés</strong>
+                        <p style="margin-top: 8px; font-size: 13px; color: #7f1d1d;">Allez dans Config → Money Management pour définir vos seuils</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Calculer les DD
+            const ddDaily = await calculateDailyDrawdown();
+            const ddWeekly = await calculateWeeklyDrawdown();
+            const ddMonthly = await calculateMonthlyDrawdown();
+            
+            // Fonction helper pour le statut DD
+            const getDDStatus = (current, threshold) => {
+                // threshold est toujours négatif (ex: -2.5%)
+                // current peut être positif (gain) ou négatif (perte)
+                
+                // Si c'est un gain (current positif), toujours OK
+                if (current >= 0) return { emoji: '🟢', label: 'OK', color: '#10b981' };
+                
+                // Si c'est une perte, vérifier les seuils
+                if (current <= threshold) return { emoji: '🔴', label: 'DÉPASSÉ', color: '#dc2626' };
+                if (current <= threshold * 0.9) return { emoji: '🟠', label: 'PROCHE', color: '#f59e0b' };
+                if (current <= threshold * 0.7) return { emoji: '🟡', label: 'Attention', color: '#eab308' };
+                return { emoji: '🟢', label: 'OK', color: '#10b981' };
+            };
+            
+            const dailyStatus = getDDStatus(ddDaily, settings.cbDaily);
+            const weeklyStatus = getDDStatus(ddWeekly, settings.cbWeekly);
+            const monthlyStatus = getDDStatus(ddMonthly, settings.cbMonthly);
+            
+            // Fonction pour barre de progression gradient
+            const getProgressBar = (current, threshold) => {
+                // Si gain (current >= 0), pas de barre de progression
+                if (current >= 0) {
+                    return `
+                        <div style="background: #e5e7eb; border-radius: 8px; height: 24px; position: relative; overflow: hidden; margin-top: 8px;">
+                            <div style="background: #10b981; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #10b981;">
+                                ✓ En gain
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Si perte, calculer le % du seuil atteint
+                const percent = Math.min(100, Math.abs((current / threshold) * 100));
+                let bgColor;
+                if (percent >= 100) bgColor = '#dc2626';
+                else if (percent >= 90) bgColor = '#f59e0b';
+                else if (percent >= 70) bgColor = '#eab308';
+                else bgColor = '#10b981';
+                
+                return `
+                    <div style="background: #e5e7eb; border-radius: 8px; height: 24px; position: relative; overflow: hidden; margin-top: 8px;">
+                        <div style="background: ${bgColor}; height: 100%; width: ${percent}%; transition: width 0.3s ease;"></div>
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #1f2937;">
+                            ${percent.toFixed(0)}% du seuil
+                        </div>
+                    </div>
+                `;
+            };
+            
+            // Section Circuit Breakers
+            let html = `
+                <h3 style="font-size: 15px; color: #374151; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">
+                    🚦 Circuit Breakers
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <!-- Daily DD -->
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid ${dailyStatus.color};">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
+                            <strong style="font-size: 13px; color: #6b7280;">Daily DD</strong>
+                            <span style="font-size: 12px; color: ${dailyStatus.color}; font-weight: 600;">${dailyStatus.emoji} ${dailyStatus.label}</span>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: ${ddDaily >= 0 ? '#10b981' : '#dc2626'}; margin-bottom: 4px;">
+                            ${ddDaily >= 0 ? '+' : ''}${ddDaily.toFixed(2)}%
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af;">Seuil: ${settings.cbDaily}%</div>
+                        ${getProgressBar(ddDaily, settings.cbDaily)}
+                    </div>
+                    
+                    <!-- Weekly DD -->
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid ${weeklyStatus.color};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="font-size: 13px; color: #6b7280;">Weekly DD</strong>
+                            <span style="font-size: 12px; color: ${weeklyStatus.color}; font-weight: 600;">${weeklyStatus.emoji} ${weeklyStatus.label}</span>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: ${ddWeekly >= 0 ? '#10b981' : '#dc2626'}; margin-bottom: 4px;">
+                            ${ddWeekly >= 0 ? '+' : ''}${ddWeekly.toFixed(2)}%
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af;">Seuil: ${settings.cbWeekly}%</div>
+                        ${getProgressBar(ddWeekly, settings.cbWeekly)}
+                    </div>
+                    
+                    <!-- Monthly DD -->
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid ${monthlyStatus.color};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="font-size: 13px; color: #6b7280;">Monthly DD</strong>
+                            <span style="font-size: 12px; color: ${monthlyStatus.color}; font-weight: 600;">${monthlyStatus.emoji} ${monthlyStatus.label}</span>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: ${ddMonthly >= 0 ? '#10b981' : '#dc2626'}; margin-bottom: 4px;">
+                            ${ddMonthly >= 0 ? '+' : ''}${ddMonthly.toFixed(2)}%
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af;">Seuil: ${settings.cbMonthly}%</div>
+                        ${getProgressBar(ddMonthly, settings.cbMonthly)}
+                    </div>
+                </div>
+            `;
+            
+            // Section Stratégies
+            const strategies = getUniqueStrategies();
+            if (strategies.length > 0) {
+                html += `
+                    <h3 style="font-size: 15px; color: #374151; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">
+                        📊 État par Stratégie
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                `;
+                
+                for (const strategy of strategies) {
+                    const exp30 = calculateRollingExpectancy(30, strategy);
+                    const lossStreak = getCurrentLossStreak(strategy);
+                    
+                    const expColor = exp30 !== null ? (exp30 >= settings.expAlerte ? '#10b981' : exp30 >= settings.expInvalid ? '#f59e0b' : '#dc2626') : '#6b7280';
+                    const streakColor = lossStreak >= settings.lossStreakInvalid ? '#dc2626' : lossStreak >= settings.lossStreakAlerte ? '#f59e0b' : '#10b981';
+                    
+                    html += `
+                        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <strong style="font-size: 14px; color: #374151; display: block; margin-bottom: 10px;">${strategy}</strong>
+                            <div style="margin-bottom: 8px;">
+                                <span style="font-size: 12px; color: #6b7280;">Expectancy 30T:</span>
+                                <span style="font-size: 16px; font-weight: 700; color: ${expColor}; margin-left: 8px;">
+                                    ${exp30 !== null ? (exp30 >= 0 ? '+' : '') + exp30.toFixed(2) + 'R' : 'N/A'}
+                                </span>
+                            </div>
+                            <div>
+                                <span style="font-size: 12px; color: #6b7280;">Série pertes:</span>
+                                <span style="font-size: 16px; font-weight: 700; color: ${streakColor}; margin-left: 8px;">
+                                    ${lossStreak}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `</div>`;
+            }
+            
+            // Section Alertes
+            const alerts = await checkMoneyManagementAlerts();
+            html += `
+                <h3 style="font-size: 15px; color: #374151; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">
+                    🚨 Alertes Actives
+                </h3>
+            `;
+            
+            if (alerts.length === 0) {
+                html += `
+                    <div style="padding: 15px; background: #f0fdf4; border-radius: 8px; text-align: center; border-left: 4px solid #10b981;">
+                        <strong style="color: #065f46;">✅ Aucune alerte - Tout est sous contrôle</strong>
+                    </div>
+                `;
+            } else {
+                html += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+                for (const alert of alerts) {
+                    const bgColor = alert.level === 'critical' ? '#fee2e2' : '#fef3c7';
+                    const borderColor = alert.level === 'critical' ? '#dc2626' : '#f59e0b';
+                    const textColor = alert.level === 'critical' ? '#991b1b' : '#92400e';
+                    
+                    html += `
+                        <div style="padding: 12px; background: ${bgColor}; border-radius: 6px; border-left: 4px solid ${borderColor};">
+                            <strong style="font-size: 13px; color: ${textColor};">${alert.message}</strong>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+            }
+            
+            document.getElementById('mmDashboard').innerHTML = html;
+            
+            // Mettre à jour les graphiques MM
+            await updateMMCharts();
+        }
+
+        async function updateMMCharts() {
+            const container = document.getElementById('mmChartsContainer');
+            const completedTrades = trades.filter(t => t.status === 'completed');
+            
+            if (completedTrades.length === 0) {
+                container.innerHTML = '<p class="no-data">Aucune donnée à afficher - Complétez des trades pour voir les graphiques</p>';
+                return;
+            }
+            
+            // Charger le capital une fois
+            const capital = await getCapital();
+            
+            // Trier par date croissante
+            const sortedTrades = [...completedTrades].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Expectancy Glissante (30 trades)</h3>
+                        <canvas id="mmExpectancyChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">Profit Factor Glissant (50 trades)</h3>
+                        <canvas id="mmPFChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">Drawdown Intraday</h3>
+                        <canvas id="mmDDChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">Séries de Pertes Maximales</h3>
+                        <canvas id="mmLossStreakChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">Distribution R</h3>
+                        <canvas id="mmRDistChart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            // GRAPHIQUE 1: Expectancy Glissante
+            const expLabels = [];
+            const expData = [];
+            
+            for (let i = 29; i < sortedTrades.length; i++) {
+                const last30 = sortedTrades.slice(i - 29, i + 1);
+                const avgR = last30.reduce((sum, t) => {
+                    const rMultiple = (t.riskAmount && t.riskAmount > 0) ? (t.pnl / t.riskAmount) : 0;
+                    return sum + rMultiple;
+                }, 0) / 30;
+                expLabels.push(`Trade ${i + 1}`);
+                expData.push(avgR);
+            }
+            
+            new Chart(document.getElementById('mmExpectancyChart'), {
+                type: 'line',
+                data: {
+                    labels: expLabels,
+                    datasets: [{
+                        label: 'Expectancy (R)',
+                        data: expData,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Expectancy: ' + context.parsed.y.toFixed(3) + 'R';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: { display: false }
+                    }
+                }
+            });
+            
+            // GRAPHIQUE 2: Profit Factor Glissant
+            const pfLabels = [];
+            const pfData = [];
+            
+            for (let i = 49; i < sortedTrades.length; i++) {
+                const last50 = sortedTrades.slice(i - 49, i + 1);
+                const wins = last50.filter(t => (t.pnl || 0) > 0).reduce((sum, t) => sum + t.pnl, 0);
+                const losses = Math.abs(last50.filter(t => (t.pnl || 0) < 0).reduce((sum, t) => sum + t.pnl, 0));
+                const pf = losses === 0 ? (wins > 0 ? 5 : 0) : wins / losses;
+                pfLabels.push(`Trade ${i + 1}`);
+                pfData.push(Math.min(pf, 5)); // Cap à 5 pour lisibilité
+            }
+            
+            new Chart(document.getElementById('mmPFChart'), {
+                type: 'line',
+                data: {
+                    labels: pfLabels,
+                    datasets: [{
+                        label: 'Profit Factor',
+                        data: pfData,
+                        borderColor: '#5a9d7a',
+                        backgroundColor: 'rgba(90, 157, 122, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'PF: ' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: { display: false }
+                    }
+                }
+            });
+            
+            // GRAPHIQUE 3: Drawdown Intraday (cumul par jour)
+            const dailyData = {};
+            
+            sortedTrades.forEach(t => {
+                const date = new Date(t.date);
+                const dateKey = date.toISOString().split('T')[0];
+                
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = { pnl: 0, capital: capital };
+                }
+                dailyData[dateKey].pnl += t.pnl || 0;
+            });
+            
+            const ddLabels = Object.keys(dailyData).map(d => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
+            const ddData = Object.values(dailyData).map(d => (d.pnl / d.capital) * 100);
+            
+            new Chart(document.getElementById('mmDDChart'), {
+                type: 'bar',
+                data: {
+                    labels: ddLabels,
+                    datasets: [{
+                        label: 'DD Daily (%)',
+                        data: ddData,
+                        backgroundColor: ddData.map(v => v >= 0 ? '#5a9d7a' : '#d47979'),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return (context.parsed.y >= 0 ? '+' : '') + context.parsed.y.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+            
+            // GRAPHIQUE 4: Séries de Pertes Maximales (calcul progressif)
+            const streakLabels = [];
+            const streakData = [];
+            let currentStreak = 0;
+            let maxStreak = 0;
+            
+            sortedTrades.forEach((t, i) => {
+                if ((t.pnl || 0) < 0) {
+                    currentStreak++;
+                    maxStreak = Math.max(maxStreak, currentStreak);
+                } else {
+                    currentStreak = 0;
+                }
+                
+                if ((i + 1) % 10 === 0) { // Tous les 10 trades
+                    streakLabels.push(`Trade ${i + 1}`);
+                    streakData.push(maxStreak);
+                }
+            });
+            
+            new Chart(document.getElementById('mmLossStreakChart'), {
+                type: 'bar',
+                data: {
+                    labels: streakLabels,
+                    datasets: [{
+                        label: 'Série pertes max',
+                        data: streakData,
+                        backgroundColor: '#f59e0b',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Max: ' + context.parsed.y + ' pertes consécutives';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+            
+            // GRAPHIQUE 5: Distribution R (histogramme)
+            const rValues = sortedTrades.map(t => {
+                return (t.riskAmount && t.riskAmount > 0) ? (t.pnl / t.riskAmount) : 0;
+            });
+            const rMin = Math.floor(Math.min(...rValues));
+            const rMax = Math.ceil(Math.max(...rValues));
+            const bins = [];
+            const binCounts = [];
+            
+            // Créer bins de 0.5R
+            for (let i = rMin; i <= rMax; i += 0.5) {
+                bins.push(i.toFixed(1));
+                const count = rValues.filter(r => r >= i && r < i + 0.5).length;
+                binCounts.push(count);
+            }
+            
+            new Chart(document.getElementById('mmRDistChart'), {
+                type: 'bar',
+                data: {
+                    labels: bins,
+                    datasets: [{
+                        label: 'Nombre de trades',
+                        data: binCounts,
+                        backgroundColor: binCounts.map((_, i) => parseFloat(bins[i]) >= 0 ? '#5a9d7a' : '#d47979'),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' trades entre ' + context.label + 'R et ' + (parseFloat(context.label) + 0.5).toFixed(1) + 'R';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'R Multiple'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Mettre à jour le badge d'alertes sur l'onglet MM
+        async function updateMMBadge() {
+            const mmTabBtn = document.getElementById('mmTabBtn');
+            if (!mmTabBtn) return;
+            
+            const alerts = await checkMoneyManagementAlerts();
+            const criticalAlerts = alerts.filter(a => a.level === 'critical');
+            
+            // Supprimer l'ancien badge s'il existe
+            const existingBadge = mmTabBtn.querySelector('.mm-badge');
+            if (existingBadge) existingBadge.remove();
+            
+            // Ajouter le nouveau badge si des alertes critiques
+            if (criticalAlerts.length > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'mm-badge';
+                badge.textContent = criticalAlerts.length;
+                badge.style.cssText = `
+                    position: absolute;
+                    top: -8px;
+                    right: -8px;
+                    background: #dc2626;
+                    color: white;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 11px;
+                    font-weight: 700;
+                    border: 2px solid white;
+                `;
+                
+                // Rendre le bouton relative pour positionner le badge
+                mmTabBtn.style.position = 'relative';
+                mmTabBtn.appendChild(badge);
+            }
         }
 
         async function updateCharts() {
@@ -4311,7 +5720,8 @@
                 content.classList.remove('active');
             });
             
-            const tabs = ['entry', 'history', 'analysis', 'settings'];
+            // v2.1.0 - Ajout onglet MM
+            const tabs = ['entry', 'history', 'analysis', 'mm', 'settings'];
             const index = tabs.indexOf(tab);
             
             document.querySelectorAll('.tab-btn')[index].classList.add('active');
@@ -4324,6 +5734,10 @@
                 displayTrades();
             } else if (tab === 'analysis') {
                 updateCharts();
+            } else if (tab === 'mm') {
+                // v2.1.0 - Charger le dashboard MM
+                updateMMDashboard();
+                updateMMCharts();
             } else if (tab === 'settings') {
                 calculateStorageSize();
             }
