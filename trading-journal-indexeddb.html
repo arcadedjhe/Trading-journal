@@ -363,17 +363,17 @@
 
         .tab-buttons {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
             margin-bottom: 15px;
         }
 
         .tab-btn {
-            padding: 12px 8px;
+            padding: 10px 6px;
             border: 2px solid #e5e7eb;
             background: white;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -624,8 +624,8 @@
 
         <div class="tab-buttons">
             <button class="tab-btn active" onclick="switchTab('entry')">➕ Nouveau</button>
-            <button class="tab-btn" onclick="switchTab('history')">📋 Historique</button>
-            <button class="tab-btn" onclick="switchTab('analysis')">📈 Analyse</button>
+            <button class="tab-btn" onclick="switchTab('history')">📋 Liste</button>
+            <button class="tab-btn" onclick="switchTab('analysis')">📈 Stats</button>
             <button class="tab-btn" onclick="switchTab('mm')" id="mmTabBtn">📊 MM</button>
             <button class="tab-btn" onclick="switchTab('settings')">⚙️ Config</button>
         </div>
@@ -4679,6 +4679,14 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 5,
+                            right: 15,
+                            top: 5,
+                            bottom: 5
+                        }
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -4690,6 +4698,10 @@
                         }
                     },
                     scales: {
+                        x: {
+                            offset: true,
+                            grid: { display: false }
+                        },
                         y: {
                             beginAtZero: true,
                             grid: { color: 'rgba(0,0,0,0.05)' }
