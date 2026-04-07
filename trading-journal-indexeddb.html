@@ -444,6 +444,8 @@
             position: relative;
             height: 250px;
             margin-bottom: 20px;
+            overflow: hidden;
+            padding: 0 5px;
         }
 
         .chart-title {
@@ -4673,7 +4675,9 @@
                         label: 'DD Daily (%)',
                         data: ddData,
                         backgroundColor: ddData.map(v => v >= 0 ? '#5a9d7a' : '#d47979'),
-                        borderWidth: 0
+                        borderWidth: 0,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8
                     }]
                 },
                 options: {
@@ -4681,9 +4685,9 @@
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            left: 5,
-                            right: 15,
-                            top: 5,
+                            left: 10,
+                            right: 20,
+                            top: 10,
                             bottom: 5
                         }
                     },
@@ -4700,7 +4704,11 @@
                     scales: {
                         x: {
                             offset: true,
-                            grid: { display: false }
+                            grid: { display: false },
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: true
+                            }
                         },
                         y: {
                             beginAtZero: true,
