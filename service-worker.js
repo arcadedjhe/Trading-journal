@@ -1,7 +1,9 @@
-const CACHE_NAME = 'trading-journal-v2.1.0';
+const CACHE_NAME = 'trading-journal-v2.2.0';
 const urlsToCache = [
   './trading-journal-indexeddb.html',
-  './manifest.json'
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 // Installation du service worker
