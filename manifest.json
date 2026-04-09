@@ -1,12 +1,12 @@
 {
   "name": "Journal de Trading Pro",
   "short_name": "Trading Journal",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Journal de trading professionnel avec gestion des trades, analyses et statistiques",
   "start_url": "./trading-journal-indexeddb.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#667eea",
+  "background_color": "#4a7c7e",
+  "theme_color": "#4a7c7e",
   "orientation": "portrait-primary",
   "icons": [
     {
