@@ -12,7 +12,7 @@
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#4a7c7e">
     <link rel="apple-touch-icon" href="icon-192.png">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -807,6 +807,20 @@
                         <div class="checkbox-group" id="timeFilters"></div>
                     </div>
 
+                    <div class="filter-group">
+                        <label>Période</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size: 12px; color: #6b7280;">Du</label>
+                                <input type="date" id="filterDateStart" onchange="handleDateFilterChange()" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #6b7280;">Au</label>
+                                <input type="date" id="filterDateEnd" onchange="handleDateFilterChange()" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <button class="filter-reset" onclick="resetFilters()">🔄 Réinitialiser les filtres</button>
                 </div>
 
@@ -863,6 +877,20 @@
                     <div class="filter-group">
                         <label>Filtrer par Horaire</label>
                         <div class="checkbox-group" id="timeFiltersAnalysis"></div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Période</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size: 12px; color: #6b7280;">Du</label>
+                                <input type="date" id="filterDateStartAnalysis" onchange="handleDateFilterChange()" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #6b7280;">Au</label>
+                                <input type="date" id="filterDateEndAnalysis" onchange="handleDateFilterChange()" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                            </div>
+                        </div>
                     </div>
 
                     <button class="filter-reset" onclick="resetAnalysisFilters()">🔄 Réinitialiser</button>
@@ -1423,6 +1451,10 @@
             // Recharger toutes les données du mode sélectionné
             await loadAllData();
             
+            // v2.2.0 - Réinitialiser les filtres au changement de mode
+            // (évite confusion entre critères Paper vs Real)
+            resetFilters();
+            
             // Afficher/Masquer le champ frais manuel selon le mode
             toggleFeesField();
             
@@ -1678,7 +1710,9 @@
             status: new Set(),
             news: new Set(),
             days: new Set(),
-            times: new Set()
+            times: new Set(),
+            dateStart: null,  // v2.2.0 - Filtre date de début
+            dateEnd: null     // v2.2.0 - Filtre date de fin
         };
 
         const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -2848,6 +2882,7 @@
             await saveTimeSlots();
             displayTimeSlots();
             initializeFilters();
+            await updateCharts(); // v2.2.0 - Régénérer les graphiques avec nouveau slot
 
             document.getElementById('timeslotName').value = '';
             document.getElementById('startHour').value = '';
@@ -3984,7 +4019,30 @@
                     });
                 }
                 
-                return assetMatch && brokerMatch && strategyMatch && directionMatch && statusMatch && newsMatch && dayMatch && timeMatch;
+                // v2.2.0 - Filtre par dates
+                let dateMatch = true;
+                if (filterSet.dateStart || filterSet.dateEnd) {
+                    const tradeDate = new Date(trade.date);
+                    tradeDate.setHours(0, 0, 0, 0); // Ignorer l'heure pour la comparaison
+                    
+                    if (filterSet.dateStart) {
+                        const startDate = new Date(filterSet.dateStart);
+                        startDate.setHours(0, 0, 0, 0);
+                        if (tradeDate < startDate) {
+                            dateMatch = false;
+                        }
+                    }
+                    
+                    if (filterSet.dateEnd) {
+                        const endDate = new Date(filterSet.dateEnd);
+                        endDate.setHours(23, 59, 59, 999); // Inclure toute la journée de fin
+                        if (tradeDate > endDate) {
+                            dateMatch = false;
+                        }
+                    }
+                }
+                
+                return assetMatch && brokerMatch && strategyMatch && directionMatch && statusMatch && newsMatch && dayMatch && timeMatch && dateMatch;
             });
         }
 
@@ -4158,10 +4216,65 @@
             filters.news.clear();
             filters.days.clear();
             filters.times.clear();
+            filters.dateStart = null;
+            filters.dateEnd = null;
+            
+            // Réinitialiser les champs de date
+            const dateStartHistory = document.getElementById('filterDateStart');
+            const dateEndHistory = document.getElementById('filterDateEnd');
+            const dateStartAnalysis = document.getElementById('filterDateStartAnalysis');
+            const dateEndAnalysis = document.getElementById('filterDateEndAnalysis');
+            
+            if (dateStartHistory) dateStartHistory.value = '';
+            if (dateEndHistory) dateEndHistory.value = '';
+            if (dateStartAnalysis) dateStartAnalysis.value = '';
+            if (dateEndAnalysis) dateEndAnalysis.value = '';
+            
             initializeFilters();
             displayTrades();
             updateStats();
             updateCharts(); // v1.9.2 - Réinitialiser aussi les graphiques
+        }
+        
+        // v2.2.0 - Gérer les changements de filtres par date
+        function handleDateFilterChange() {
+            // Récupérer les valeurs depuis les 2 onglets (History et Analysis)
+            const dateStartHistory = document.getElementById('filterDateStart');
+            const dateEndHistory = document.getElementById('filterDateEnd');
+            const dateStartAnalysis = document.getElementById('filterDateStartAnalysis');
+            const dateEndAnalysis = document.getElementById('filterDateEndAnalysis');
+            
+            // Prendre la valeur de l'onglet actif
+            let startValue = null;
+            let endValue = null;
+            
+            if (dateStartHistory && dateStartHistory.value) {
+                startValue = dateStartHistory.value;
+            }
+            if (dateStartAnalysis && dateStartAnalysis.value) {
+                startValue = dateStartAnalysis.value;
+            }
+            if (dateEndHistory && dateEndHistory.value) {
+                endValue = dateEndHistory.value;
+            }
+            if (dateEndAnalysis && dateEndAnalysis.value) {
+                endValue = dateEndAnalysis.value;
+            }
+            
+            // Mettre à jour l'objet filters
+            filters.dateStart = startValue;
+            filters.dateEnd = endValue;
+            
+            // Synchroniser les champs entre les deux onglets
+            if (dateStartHistory) dateStartHistory.value = startValue || '';
+            if (dateStartAnalysis) dateStartAnalysis.value = startValue || '';
+            if (dateEndHistory) dateEndHistory.value = endValue || '';
+            if (dateEndAnalysis) dateEndAnalysis.value = endValue || '';
+            
+            // Rafraîchir l'affichage
+            displayTrades();
+            updateStats();
+            updateCharts();
         }
 
         // v1.9.2 - Fonction fusionnée : un seul reset pour tout
