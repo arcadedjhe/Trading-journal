@@ -1,5 +1,13 @@
 # Trading-journal
 
+# Trading Journal PWA - Version 2.2.0
+01/05/2026
+
+✅ Graphique horaires : Régénération après ajout plage personnalisée
+✅ Filtres dates : Début et fin de période (synchronisés Histoire/Analyse)
+✅ Reset filtres : Inclut maintenant les dates
+✅ Changement mode : Reset automatique de tous les filtres (y compris dates)
+
 # Trading Journal PWA - Version 2.1.0 🎯
 
 **Date de sortie** : 02 avril 2026
