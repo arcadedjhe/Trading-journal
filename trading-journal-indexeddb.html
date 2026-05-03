@@ -2922,10 +2922,8 @@
                 await saveTimeSlots();
                 displayTimeSlots();
                 initializeFilters();
-                updateStats();
-                if (document.getElementById('analysisTab').classList.contains('active')) {
-                    updateCharts();
-                }
+                await updateStats();
+                await updateCharts(); // v2.2.0 - Toujours mettre à jour, pas seulement si onglet actif
             }
         }
 
@@ -2935,6 +2933,7 @@
                 await saveTimeSlots();
                 displayTimeSlots();
                 initializeFilters();
+                await updateCharts(); // v2.2.0 - Régénérer les graphiques
             }
         }
 
@@ -3971,6 +3970,7 @@
                 }
             }
 
+            console.log(`  ⏰ Trade ${hour}:${String(minute).padStart(2,'0')} (${tradeTime}min) ne correspond à aucun slot`);
             return 'Autre';
         }
 
@@ -5049,7 +5049,7 @@
             createBrokerChart(completedTrades);
             createStrategyChart(completedTrades);
             createDayChart(completedTrades);
-            createTimeChart(completedTrades);
+            await createTimeChart(completedTrades); // v2.2.0 - async pour recharger timeSlots
             createDistributionChart(completedTrades);
             createMonthlyPnlChart(completedTrades); // v2.1.0
             createWeeklyPnlChart(completedTrades); // v2.1.0
@@ -5325,20 +5325,51 @@
             });
         }
 
-        function createTimeChart(tradesToChart) {
+        async function createTimeChart(tradesToChart) {
+            // v2.2.0 - Recharger timeSlots pour garantir qu'on a les dernières plages horaires
+            await loadTimeSlots();
+            
+            console.log('🔍 DEBUG createTimeChart - Début');
+            console.log('📊 Nombre de timeSlots chargés:', timeSlots.length);
+            console.log('📋 Labels des slots:', timeSlots.map(s => s.label));
+            console.log('📈 Nombre de trades à analyser:', tradesToChart.length);
+            
             const timeStats = {};
             timeSlots.forEach(function(slot) { timeStats[slot.label] = 0; });
+            timeStats['Autre'] = 0; // v2.2.0 - Gérer les trades hors plages définies
+            
+            console.log('🎯 timeStats initialisé:', Object.keys(timeStats));
             
             tradesToChart.forEach(function(trade) {
                 const timeSlot = getTradeTimeSlot(trade);
+                const tradeDate = new Date(trade.date);
+                const tradeHour = tradeDate.getHours();
+                const tradeMinute = tradeDate.getMinutes();
+                
+                console.log(`  📍 Trade ${trade.date} (${tradeHour}:${String(tradeMinute).padStart(2,'0')}) → Slot: "${timeSlot}" | P&L: ${trade.pnl}€`);
+                
                 if (timeStats[timeSlot] !== undefined) {
                     timeStats[timeSlot] += trade.pnl;
+                } else {
+                    console.warn(`  ⚠️  Slot "${timeSlot}" non trouvé dans timeStats !`);
+                    timeStats['Autre'] += trade.pnl;
                 }
             });
+            
+            console.log('💰 timeStats après traitement:', timeStats);
 
+            // Créer les labels (timeSlots + 'Autre' si non vide)
             const labels = timeSlots.map(function(s) { return s.label; });
+            if (timeStats['Autre'] !== 0) {
+                labels.push('Autre');
+            }
+            
             const pnls = labels.map(function(l) { return timeStats[l] || 0; });
-            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; }); /* Vert émeraude / Rouge corail */
+            const colors = pnls.map(function(p) { return p >= 0 ? '#5a9d7a' : '#d47979'; });
+            
+            console.log('📊 Labels finaux pour graphique:', labels);
+            console.log('💵 P&Ls finaux:', pnls);
+            console.log('🔍 DEBUG createTimeChart - Fin\n');
 
             const ctx = document.getElementById('timeChart').getContext('2d');
             charts.time = new Chart(ctx, {
