@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Trading Journal PWA - Version 2.1.0 - Duplication Real → Paper -->
+<!-- Trading Journal PWA - Version 2.2.2 - FIX graphique horaires (inclusion multiple) -->
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -3960,7 +3960,7 @@
             const minute = date.getMinutes();
             const tradeTime = hour * 60 + minute;
 
-            // v2.2.1 - Trouver TOUTES les plages qui matchent
+            // v2.2.1 FIX - Retourner TOUTES les plages qui matchent (pas seulement la plus courte)
             const matchingSlots = [];
             
             for (let i = 0; i < timeSlots.length; i++) {
@@ -3969,27 +3969,21 @@
                 const endTime = slot.endHour * 60 + slot.endMinute;
                 
                 if (tradeTime >= startTime && tradeTime < endTime) {
-                    // Calculer la durée de la plage
-                    const duration = endTime - startTime;
-                    matchingSlots.push({ slot: slot, duration: duration });
+                    matchingSlots.push(slot.label);
                 }
             }
             
-            // Si plusieurs plages matchent, prendre la plus courte (la plus spécifique)
+            // Si au moins une plage matche, retourner toutes
             if (matchingSlots.length > 0) {
-                // Trier par durée croissante
-                matchingSlots.sort((a, b) => a.duration - b.duration);
-                const selected = matchingSlots[0].slot;
-                
                 if (matchingSlots.length > 1) {
-                    console.log(`  🎯 Plusieurs plages matchent pour ${hour}:${String(minute).padStart(2,'0')} - Choisi: "${selected.label}" (${matchingSlots[0].duration}min) parmi ${matchingSlots.map(m => m.slot.label).join(', ')}`);
+                    console.log(`  🎯 Trade ${hour}:${String(minute).padStart(2,'0')} apparaît dans ${matchingSlots.length} plages: ${matchingSlots.join(', ')}`);
                 }
-                
-                return selected.label;
+                return matchingSlots;
             }
 
+            // Aucune plage ne matche
             console.log(`  ⏰ Trade ${hour}:${String(minute).padStart(2,'0')} (${tradeTime}min) ne correspond à aucun slot`);
-            return 'Autre';
+            return ['Autre'];
         }
 
         // Fonction pour vérifier si un trade appartient à une plage horaire spécifique
@@ -5359,19 +5353,22 @@
             console.log('🎯 timeStats initialisé:', Object.keys(timeStats));
             
             tradesToChart.forEach(function(trade) {
-                const timeSlot = getTradeTimeSlot(trade);
+                const matchingSlots = getTradeTimeSlot(trade); // Retourne maintenant un ARRAY
                 const tradeDate = new Date(trade.date);
                 const tradeHour = tradeDate.getHours();
                 const tradeMinute = tradeDate.getMinutes();
                 
-                console.log(`  📍 Trade ${trade.date} (${tradeHour}:${String(tradeMinute).padStart(2,'0')}) → Slot: "${timeSlot}" | P&L: ${trade.pnl}€`);
+                console.log(`  📍 Trade ${trade.date} (${tradeHour}:${String(tradeMinute).padStart(2,'0')}) → Slots: [${matchingSlots.join(', ')}] | P&L: ${trade.pnl}€`);
                 
-                if (timeStats[timeSlot] !== undefined) {
-                    timeStats[timeSlot] += trade.pnl;
-                } else {
-                    console.warn(`  ⚠️  Slot "${timeSlot}" non trouvé dans timeStats !`);
-                    timeStats['Autre'] += trade.pnl;
-                }
+                // Ajouter le P&L dans TOUTES les plages qui matchent
+                matchingSlots.forEach(function(timeSlot) {
+                    if (timeStats[timeSlot] !== undefined) {
+                        timeStats[timeSlot] += trade.pnl;
+                    } else {
+                        console.warn(`  ⚠️  Slot "${timeSlot}" non trouvé dans timeStats !`);
+                        timeStats['Autre'] += trade.pnl;
+                    }
+                });
             });
             
             console.log('💰 timeStats après traitement:', timeStats);
@@ -5604,7 +5601,7 @@
                     direction,
                     newsImpact,
                     getTradeDay(t),
-                    getTradeTimeSlot(t),
+                    getTradeTimeSlot(t).join(', '), // v2.2.2 - Peut être dans plusieurs plages
                     t.strategy,
                     status,
                     result,
