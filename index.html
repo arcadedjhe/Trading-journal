@@ -3960,14 +3960,32 @@
             const minute = date.getMinutes();
             const tradeTime = hour * 60 + minute;
 
+            // v2.2.1 - Trouver TOUTES les plages qui matchent
+            const matchingSlots = [];
+            
             for (let i = 0; i < timeSlots.length; i++) {
                 const slot = timeSlots[i];
                 const startTime = slot.startHour * 60 + slot.startMinute;
                 const endTime = slot.endHour * 60 + slot.endMinute;
                 
                 if (tradeTime >= startTime && tradeTime < endTime) {
-                    return slot.label;
+                    // Calculer la durée de la plage
+                    const duration = endTime - startTime;
+                    matchingSlots.push({ slot: slot, duration: duration });
                 }
+            }
+            
+            // Si plusieurs plages matchent, prendre la plus courte (la plus spécifique)
+            if (matchingSlots.length > 0) {
+                // Trier par durée croissante
+                matchingSlots.sort((a, b) => a.duration - b.duration);
+                const selected = matchingSlots[0].slot;
+                
+                if (matchingSlots.length > 1) {
+                    console.log(`  🎯 Plusieurs plages matchent pour ${hour}:${String(minute).padStart(2,'0')} - Choisi: "${selected.label}" (${matchingSlots[0].duration}min) parmi ${matchingSlots.map(m => m.slot.label).join(', ')}`);
+                }
+                
+                return selected.label;
             }
 
             console.log(`  ⏰ Trade ${hour}:${String(minute).padStart(2,'0')} (${tradeTime}min) ne correspond à aucun slot`);
